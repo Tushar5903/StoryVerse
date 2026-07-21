@@ -17,6 +17,7 @@ import com.storyreview.repository.BookRepository;
 import com.storyreview.repository.ChapterRepository;
 import com.storyreview.repository.UserRepository;
 import com.storyreview.service.BookService;
+import com.storyreview.service.CloudinaryService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,29 +37,43 @@ public class BookServiceImpl implements BookService {
     private final AuthorRepository authors;
     private final UserRepository users;
     private final ChapterRepository chapters;
+    private final CloudinaryService cloudinary;
 
-    public BookServiceImpl(BookRepository books, AuthorRepository authors, UserRepository users, ChapterRepository chapters) {
+    public BookServiceImpl(BookRepository books, AuthorRepository authors, UserRepository users, ChapterRepository chapters,
+                           CloudinaryService cloudinary) {
         this.books = books;
         this.authors = authors;
         this.users = users;
         this.chapters = chapters;
+        this.cloudinary = cloudinary;
     }
 
     @Override
     public BookResponse createReviewBook(CreateReviewBookRequest request, Long adminId) {
+        return createReviewBook(request, null, adminId);
+    }
+
+    @Override
+    public BookResponse createReviewBook(CreateReviewBookRequest request, MultipartFile thumbnail, Long adminId) {
         // Admin flow is unchanged: created fully-formed and published immediately.
         validateDuplicateTitle(request.title(), request.authorId(), null);
         Book book = new Book();
         book.setBookType(BookType.REVIEW_BOOK);
         book.setPublished(true);
         applyFields(book, request.title(), request.subtitle(), request.description(), request.coverImage(),
-                request.language(), request.genre(), request.tags(), request.publicationDate(), request.authorId());
+                request.language(), request.genre(), request.tags(), request.publicationDate(), request.authorId(),
+                thumbnail == null || thumbnail.isEmpty() ? null : cloudinaryUpload(thumbnail));
         book.setCreatedBy(findUser(adminId));
         return toResponse(saveBook(book));
     }
 
     @Override
     public BookResponse createDraft(CreateDraftBookRequest request, Long userId) {
+        return createDraft(request, null, userId);
+    }
+
+    @Override
+    public BookResponse createDraft(CreateDraftBookRequest request, MultipartFile thumbnail, Long userId) {
         // Step 1 of the USER_BOOK flow: only title + author. Everything else, including
         // description, is filled in later via completeDetails() before publish().
         User user = findUser(userId);
@@ -69,11 +85,20 @@ public class BookServiceImpl implements BookService {
         book.setTitle(request.title().trim());
         book.setAuthor(author);
         book.setCreatedBy(user);
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            book.setThumbnailUrl(cloudinaryUpload(thumbnail));
+        }
         return toResponse(saveBook(book));
     }
 
     @Override
     public BookResponse completeDetails(Long id, CompleteBookDetailsRequest request, Long userId, Role role) {
+        return completeDetails(id, request, null, userId, role);
+    }
+
+    @Override
+    public BookResponse completeDetails(Long id, CompleteBookDetailsRequest request, MultipartFile thumbnail,
+                                        Long userId, Role role) {
         Book book = findBook(id);
         assertCanModify(book, userId, role);
         book.setDescription(request.description());
@@ -83,6 +108,9 @@ public class BookServiceImpl implements BookService {
         book.setGenre(request.genre());
         book.setTags(request.tags() == null ? new HashSet<>() : new HashSet<>(request.tags()));
         book.setPublicationDate(request.publicationDate());
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            book.setThumbnailUrl(cloudinaryUpload(thumbnail));
+        }
         return toResponse(saveBook(book));
     }
 
@@ -106,11 +134,17 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookResponse update(Long id, UpdateBookRequest request, Long userId, Role role) {
+        return update(id, request, null, userId, role);
+    }
+
+    @Override
+    public BookResponse update(Long id, UpdateBookRequest request, MultipartFile thumbnail, Long userId, Role role) {
         Book book = findBook(id);
         assertCanModify(book, userId, role);
         validateDuplicateTitle(request.title(), request.authorId(), id);
         applyFields(book, request.title(), request.subtitle(), request.description(), request.coverImage(),
-                request.language(), request.genre(), request.tags(), request.publicationDate(), request.authorId());
+                request.language(), request.genre(), request.tags(), request.publicationDate(), request.authorId(),
+                thumbnail == null || thumbnail.isEmpty() ? null : cloudinaryUpload(thumbnail));
         return toResponse(saveBook(book));
     }
 
@@ -165,7 +199,7 @@ public class BookServiceImpl implements BookService {
 
     private void applyFields(Book book, String title, String subtitle, String description, String coverImage,
                              String language, String genre, Set<String> tags,
-                             java.time.LocalDate publicationDate, Long authorId) {
+                             java.time.LocalDate publicationDate, Long authorId, String thumbnailUrl) {
         book.setTitle(title.trim());
         book.setSubtitle(subtitle);
         book.setDescription(description);
@@ -175,6 +209,9 @@ public class BookServiceImpl implements BookService {
         book.setTags(tags == null ? new HashSet<>() : new HashSet<>(tags));
         book.setPublicationDate(publicationDate);
         book.setAuthor(findAuthor(authorId));
+        if (thumbnailUrl != null) {
+            book.setThumbnailUrl(thumbnailUrl);
+        }
     }
 
     private void validateDuplicateTitle(String title, Long authorId, Long excludeId) {
@@ -238,8 +275,12 @@ public class BookServiceImpl implements BookService {
 
     private BookResponse toResponse(Book book) {
         return new BookResponse(book.getId(), book.getTitle(), book.getSubtitle(), book.getDescription(),
-                book.getCoverImage(), book.getBookType(), book.isPublished(), book.getLanguage(), book.getGenre(),
+                book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(), book.getGenre(),
                 book.getTags(), book.getPublicationDate(), book.getCreatedBy().getId(), book.getAuthor().getId(),
                 book.getAuthor().getName(), book.getCreatedAt(), book.getUpdatedAt());
+    }
+
+    private String cloudinaryUpload(MultipartFile thumbnail) {
+        return cloudinary.uploadBookCover(thumbnail);
     }
 }

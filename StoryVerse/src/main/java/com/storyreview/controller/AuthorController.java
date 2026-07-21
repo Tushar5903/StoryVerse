@@ -36,13 +36,6 @@ public class AuthorController {
         return authorService.update(id, request);
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
-    void delete(@PathVariable Long id) {
-        authorService.delete(id);
-    }
-
     @GetMapping
     Page<AuthorResponse> getAll(Pageable pageable) {
         return authorService.getAll(pageable);

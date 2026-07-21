@@ -12,7 +12,6 @@ import java.util.List;
 public interface AuthorService {
     AuthorResponse create(CreateAuthorRequest request);
     AuthorResponse update(Long id, UpdateAuthorRequest request);
-    void delete(Long id);
     AuthorResponse getById(Long id);
     Page<AuthorResponse> getAll(Pageable pageable);
     List<BookResponse> getBooks(Long authorId);

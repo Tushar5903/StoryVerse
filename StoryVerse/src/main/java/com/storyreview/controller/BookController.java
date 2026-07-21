@@ -12,9 +12,11 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/books")
@@ -54,6 +56,15 @@ public class BookController {
         return bookService.createReviewBook(request, user.id());
     }
 
+    @PostMapping(value = "/review", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
+    BookResponse createReviewBookWithThumbnail(@RequestPart("request") @Valid CreateReviewBookRequest request,
+                                               @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+                                               @AuthenticationPrincipal CurrentUser user) {
+        return bookService.createReviewBook(request, thumbnail, user.id());
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
@@ -62,11 +73,29 @@ public class BookController {
         return bookService.createDraft(request, user.id());
     }
 
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    BookResponse createDraftWithThumbnail(@RequestPart("request") @Valid CreateDraftBookRequest request,
+                                           @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+                                           @AuthenticationPrincipal CurrentUser user) {
+        return bookService.createDraft(request, thumbnail, user.id());
+    }
+
     @PutMapping("/{id}/details")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     BookResponse completeDetails(@PathVariable Long id, @Valid @RequestBody CompleteBookDetailsRequest request,
                                  @AuthenticationPrincipal CurrentUser user) {
         return bookService.completeDetails(id, request, user.id(), user.role());
+    }
+
+    @PutMapping(value = "/{id}/details", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    BookResponse completeDetailsWithThumbnail(@PathVariable Long id,
+                                               @RequestPart("request") @Valid CompleteBookDetailsRequest request,
+                                               @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+                                               @AuthenticationPrincipal CurrentUser user) {
+        return bookService.completeDetails(id, request, thumbnail, user.id(), user.role());
     }
 
     @PostMapping("/{id}/publish")
@@ -80,6 +109,15 @@ public class BookController {
     BookResponse update(@PathVariable Long id, @Valid @RequestBody UpdateBookRequest request,
                         @AuthenticationPrincipal CurrentUser user) {
         return bookService.update(id, request, user.id(), user.role());
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    BookResponse updateWithThumbnail(@PathVariable Long id,
+                                     @RequestPart("request") @Valid UpdateBookRequest request,
+                                     @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+                                     @AuthenticationPrincipal CurrentUser user) {
+        return bookService.update(id, request, thumbnail, user.id(), user.role());
     }
 
     @DeleteMapping("/{id}")

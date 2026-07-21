@@ -44,6 +44,9 @@ public class Book extends BaseEntity {
     @Column(name = "cover_image", length = 500)
     private String coverImage;
 
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
     @Column(nullable = false)
     private boolean published = true;
 

@@ -27,7 +27,7 @@ public final class ApiResponses {
             String username, String email, Instant createdAt, Instant updatedAt) {}
 
     public record BookResponse(
-            Long id, String title, String subtitle, String description, String coverImage,
+            Long id, String title, String subtitle, String description, String coverImage, String thumbnailUrl,
             BookType bookType, boolean published, String language, String genre, Set<String> tags,
             LocalDate publicationDate, Long createdById, Long authorId, String authorName,
             Instant createdAt, Instant updatedAt) {}

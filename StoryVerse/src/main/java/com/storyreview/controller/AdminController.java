@@ -64,7 +64,7 @@ public class AdminController {
 
     private BookResponse toBookResponse(Book book) {
         return new BookResponse(book.getId(), book.getTitle(), book.getSubtitle(), book.getDescription(),
-                book.getCoverImage(), book.getBookType(), book.isPublished(), book.getLanguage(), book.getGenre(),
+                book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(), book.getGenre(),
                 book.getTags(), book.getPublicationDate(), book.getCreatedBy().getId(), book.getAuthor().getId(),
                 book.getAuthor().getName(), book.getCreatedAt(), book.getUpdatedAt());
     }
