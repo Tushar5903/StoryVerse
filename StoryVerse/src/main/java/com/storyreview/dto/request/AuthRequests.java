@@ -19,6 +19,7 @@ public final class AuthRequests {
 
     public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {}
     public record RefreshTokenRequest(@NotBlank String refreshToken) {}
+    public record LogoutRequest(@NotBlank String refreshToken) {}
     public record ForgotPasswordRequest(@NotBlank @Email String email) {}
     public record ResetPasswordRequest(@NotBlank String token, @NotBlank @Size(min = 8, max = 72) String newPassword) {}
 }

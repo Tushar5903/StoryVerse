@@ -22,8 +22,7 @@ public final class BookRequests {
             @NotNull Long authorId) {}
 
     public record CreateDraftBookRequest(
-            @NotBlank @Size(max = 240) String title,
-            @NotNull Long authorId) {}
+            @NotBlank @Size(max = 240) String title) {}
 
 
     public record CompleteBookDetailsRequest(

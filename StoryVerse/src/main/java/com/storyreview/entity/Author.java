@@ -1,11 +1,16 @@
 package com.storyreview.entity;
 
+import com.storyreview.enums.AuthorType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
@@ -35,6 +40,14 @@ public class Author extends BaseEntity {
 
     @Column(length = 5000)
     private String biography;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "author_type", nullable = false, length = 16)
+    private AuthorType authorType = AuthorType.ADMIN;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @OneToMany(mappedBy = "author", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = false)
     private List<Book> books = new ArrayList<>();

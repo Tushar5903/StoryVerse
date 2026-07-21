@@ -1,195 +1,55 @@
 {
   "info": {
-    "name": "StoryVerse API - Working Login Flow",
-    "description": "End-to-end Auth, Books, Reviews, and Admin requests for the MySQL-backed StoryVerse API.",
+    "name": "StoryVerse Feature Verification",
+    "description": "Auth, books, chapters, profiles, logout, and review authorization flows.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8081/api" },
-    { "key": "jwt_token", "value": "" },
-    { "key": "refresh_token", "value": "" },
-    { "key": "admin_jwt_token", "value": "" },
-    { "key": "admin_refresh_token", "value": "" },
-    { "key": "user_email", "value": "" },
-    { "key": "user_password", "value": "Password123!" },
-    { "key": "admin_email", "value": "" },
-    { "key": "admin_password", "value": "Password123!" },
-    { "key": "author_id", "value": "" },
-    { "key": "book_id", "value": "" },
-    { "key": "chapter_id", "value": "" },
-    { "key": "review_id", "value": "" }
+    {"key":"base_url","value":"http://localhost:8081/api"},
+    {"key":"jwt_token","value":""},{"key":"admin_jwt_token","value":""},{"key":"reader_jwt_token","value":""},
+    {"key":"refresh_token","value":""},{"key":"author_id","value":""},{"key":"user_book_id","value":""},{"key":"admin_book_id","value":""},{"key":"chapter_id","value":""},{"key":"review_id","value":""},
+    {"key":"user_email","value":""},{"key":"user_username","value":""},{"key":"admin_email","value":""},{"key":"admin_username","value":""},{"key":"reader_email","value":""},{"key":"reader_username","value":""},
+    {"key":"password","value":"Password123!"},{"key":"profile_image_path","value":""}
   ],
   "item": [
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Register User",
-          "event": [{ "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
-            "const s = Date.now();",
-            "pm.collectionVariables.set('user_email', `postman.user.${s}@example.com`);",
-            "pm.collectionVariables.set('user_username', `postman_user_${s}`);"
-          ] } }],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Reader\",\n  \"username\": \"{{user_username}}\",\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"role\": \"USER\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/auth/register"
-          }
-        },
-        {
-          "name": "Login User - save jwt_token and refresh_token",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/auth/login"
-          },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Login returns 200', () => pm.response.to.have.status(200));",
-            "const data = pm.response.json();",
-            "pm.collectionVariables.set('jwt_token', data.accessToken);",
-            "pm.collectionVariables.set('refresh_token', data.refreshToken);"
-          ] } }]
-        },
-        {
-          "name": "Register Admin",
-          "event": [{ "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
-            "const s = Date.now();",
-            "pm.collectionVariables.set('admin_email', `postman.admin.${s}@example.com`);",
-            "pm.collectionVariables.set('admin_username', `postman_admin_${s}`);"
-          ] } }],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Admin\",\n  \"username\": \"{{admin_username}}\",\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\",\n  \"role\": \"ADMIN\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/auth/register"
-          }
-        },
-        {
-          "name": "Login Admin",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/auth/login"
-          },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Admin login returns 200', () => pm.response.to.have.status(200));",
-            "const data = pm.response.json();",
-            "pm.collectionVariables.set('admin_jwt_token', data.accessToken);",
-            "pm.collectionVariables.set('admin_refresh_token', data.refreshToken);"
-          ] } }]
-        },
-        {
-          "name": "Prepare Demo Author",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Author {{admin_username}}\",\n  \"placeOfBirth\": \"Pune, India\",\n  \"biography\": \"Author prepared for the end-to-end Postman flow.\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/authors"
-          },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Demo author created', () => pm.response.to.have.status(201));",
-            "pm.collectionVariables.set('author_id', pm.response.json().id);"
-          ] } }]
-        }
-      ]
-    },
-    {
-      "name": "Books",
-      "item": [
-        {
-          "name": "Create Review Book",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Test Book {{user_username}}\",\n  \"subtitle\": \"A Database-Safe Demo\",\n  \"description\": \"A realistic Postman integration-test story.\",\n  \"language\": \"English\",\n  \"genre\": \"Science Fiction\",\n  \"tags\": [\"integration\", \"mysql\"],\n  \"publicationDate\": \"2026-07-21\",\n  \"authorId\": {{author_id}}\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/books/review"
-          },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Review book created', () => pm.response.to.have.status(201));",
-            "pm.collectionVariables.set('book_id', pm.response.json().id);"
-          ] } }]
-        },
-        {
-          "name": "Get Book",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
-            "url": "{{base_url}}/books/{{book_id}}"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Reviews",
-      "item": [
-        {
-          "name": "Create Review - Go For It",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"bookId\": {{book_id}},\n  \"verdict\": \"GO_FOR_IT\",\n  \"message\": \"A strong demo of a book surviving a real database round trip.\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/reviews"
-          },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Review created', () => pm.response.to.have.status(201));",
-            "pm.collectionVariables.set('review_id', pm.response.json().id);"
-          ] } }]
-        },
-        {
-          "name": "Get Reviews By Book",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
-            "url": "{{base_url}}/reviews?bookId={{book_id}}&page=0&size=20"
-          }
-        },
-        {
-          "name": "Update Review - Perfection",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"verdict\": \"PERFECTION\",\n  \"message\": \"The complete flow is reliable and repeatable.\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/reviews/{{review_id}}"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin",
-      "item": [
-        {
-          "name": "Create Author",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Integration Author {{admin_username}}\",\n  \"placeOfBirth\": \"Pune, India\",\n  \"biography\": \"An author created during the StoryVerse integration flow.\"\n}", "options": { "raw": { "language": "json" } } },
-            "url": "{{base_url}}/authors"
-          },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Author created', () => pm.response.to.have.status(201));",
-            "pm.collectionVariables.set('author_id', pm.response.json().id);"
-          ] } }]
-        },
-        {
-          "name": "Admin Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
-            "url": "{{base_url}}/admin/dashboard"
-          }
-        }
-      ]
-    }
+    {"name":"Auth","item":[
+      {"name":"Register User","event":[{"listen":"prerequest","script":{"type":"text/javascript","exec":["const s=Date.now(); pm.collectionVariables.set('user_email',`feature.user.${s}@example.com`); pm.collectionVariables.set('user_username',`feature_user_${s}`); "]}}],"request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"name\": \"Feature User\",\n  \"username\": \"{{user_username}}\",\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"USER\"\n}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/auth/register"}},
+      {"name":"Login User","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{password}}\"\n}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/auth/login"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('200',()=>pm.response.to.have.status(200)); const d=pm.response.json(); pm.collectionVariables.set('jwt_token',d.accessToken); pm.collectionVariables.set('refresh_token',d.refreshToken);"]}}]},
+      {"name":"Register Admin","event":[{"listen":"prerequest","script":{"type":"text/javascript","exec":["const s=Date.now(); pm.collectionVariables.set('admin_email',`feature.admin.${s}@example.com`); pm.collectionVariables.set('admin_username',`feature_admin_${s}`);"]}}],"request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"name\": \"Feature Admin\",\n  \"username\": \"{{admin_username}}\",\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"ADMIN\"\n}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/auth/register"}},
+      {"name":"Login Admin","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{password}}\"\n}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/auth/login"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('200',()=>pm.response.to.have.status(200)); pm.collectionVariables.set('admin_jwt_token',pm.response.json().accessToken);"]}}]},
+      {"name":"Register Reader","event":[{"listen":"prerequest","script":{"type":"text/javascript","exec":["const s=Date.now(); pm.collectionVariables.set('reader_email',`feature.reader.${s}@example.com`); pm.collectionVariables.set('reader_username',`feature_reader_${s}`);"]}}],"request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"name\": \"Feature Reader\",\n  \"username\": \"{{reader_username}}\",\n  \"email\": \"{{reader_email}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"USER\"\n}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/auth/register"}},
+      {"name":"Login Reader","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"email\": \"{{reader_email}}\",\n  \"password\": \"{{password}}\"\n}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/auth/login"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('200',()=>pm.response.to.have.status(200)); pm.collectionVariables.set('reader_jwt_token',pm.response.json().accessToken);"]}}]},
+      {"name":"Create Author","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"name\":\"Feature Author {{admin_username}}\",\"biography\":\"Feature author\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/authors"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('201',()=>pm.response.to.have.status(201)); pm.collectionVariables.set('author_id',pm.response.json().id);"]}}]}
+    ]},
+    {"name":"Books","item":[
+      {"name":"Create User Book (author is automatic)","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"title\":\"Feature User Book {{user_username}}\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/books"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('201',()=>pm.response.to.have.status(201)); pm.collectionVariables.set('user_book_id',pm.response.json().id);"]}}]},
+      {"name":"Complete User Book","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"description\":\"Feature book description\",\"genre\":\"Fantasy\",\"tags\":[\"feature\"]}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/books/{{user_book_id}}/details"}},
+      {"name":"Create Admin Book","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"title\":\"Feature Admin Book {{admin_username}}\",\"description\":\"Admin-published feature book\",\"genre\":\"Fiction\",\"authorId\":{{author_id}}}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/books/review"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('201',()=>pm.response.to.have.status(201)); pm.collectionVariables.set('admin_book_id',pm.response.json().id);"]}}]}
+    ]},
+    {"name":"Chapters","item":[
+      {"name":"Create Chapter 1","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"chapterNumber\":1,\"chapterTitle\":\"Beginning\",\"chapterContent\":\"First chapter content\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/books/{{user_book_id}}/chapters"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('201',()=>pm.response.to.have.status(201)); pm.collectionVariables.set('chapter_id',pm.response.json().id);"]}}]},
+      {"name":"Create Chapter 2","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"chapterNumber\":2,\"chapterTitle\":\"Next\",\"chapterContent\":\"Second chapter content\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/books/{{user_book_id}}/chapters"}},
+      {"name":"List Chapters","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"url":"{{base_url}}/books/{{user_book_id}}/chapters"}},
+      {"name":"Get Chapter","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"url":"{{base_url}}/books/{{user_book_id}}/chapters/{{chapter_id}}"}},
+      {"name":"Update Chapter","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"chapterNumber\":1,\"chapterTitle\":\"Beginning Revised\",\"chapterContent\":\"Updated content\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/books/{{user_book_id}}/chapters/{{chapter_id}}"}},
+      {"name":"Delete Chapter","request":{"method":"DELETE","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"url":"{{base_url}}/books/{{user_book_id}}/chapters/{{chapter_id}}"}},
+      {"name":"Publish User Book","request":{"method":"POST","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"url":"{{base_url}}/books/{{user_book_id}}/publish"}}
+    ]},
+    {"name":"Profiles","item":[
+      {"name":"Get User Profile","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"url":"{{base_url}}/users/me"}},
+      {"name":"Update User Profile with Image","request":{"method":"PUT","header":[],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"formdata","formdata":[{"key":"name","value":"Updated Feature User","type":"text"},{"key":"bio","value":"Updated user bio","type":"text"},{"key":"image","type":"file","src":"{{profile_image_path}}"}]},"url":"{{base_url}}/users/me"}},
+      {"name":"Update Admin Profile with Image","request":{"method":"PUT","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_jwt_token}}"}]},"body":{"mode":"formdata","formdata":[{"key":"name","value":"Updated Feature Admin","type":"text"},{"key":"bio","value":"Updated admin bio","type":"text"},{"key":"image","type":"file","src":"{{profile_image_path}}"}]},"url":"{{base_url}}/users/me"}}
+    ]},
+    {"name":"Reviews","item":[
+      {"name":"Admin review user book - expected 403","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"bookId\":{{user_book_id}},\"verdict\":\"SKIP\",\"message\":\"Should be forbidden\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/reviews"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('403 expected',()=>pm.response.to.have.status(403));"]}}]},
+      {"name":"Owner review own book - expected 403","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"bookId\":{{user_book_id}},\"verdict\":\"SKIP\",\"message\":\"Should be forbidden\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/reviews"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('403 expected',()=>pm.response.to.have.status(403));"]}}]},
+      {"name":"Reader reviews user book - expected 201","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{reader_jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"bookId\":{{user_book_id}},\"verdict\":\"GO_FOR_IT\",\"message\":\"Reader review of user book\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/reviews"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('201',()=>pm.response.to.have.status(201)); pm.collectionVariables.set('review_id',pm.response.json().id);"]}}]},
+      {"name":"Reader reviews admin book - expected 201","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{reader_jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"bookId\":{{admin_book_id}},\"verdict\":\"PERFECTION\",\"message\":\"Reader review of admin book\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/reviews"}}
+    ]},
+    {"name":"Admin","item":[
+      {"name":"Dashboard","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_jwt_token}}"}]},"url":"{{base_url}}/admin/dashboard"}},
+      {"name":"List Authors with USER or ADMIN type","request":{"method":"GET","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_jwt_token}}"}]},"url":"{{base_url}}/admin/authors?page=0&size=50"}},
+      {"name":"Logout User","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{jwt_token}}"}]},"body":{"mode":"raw","raw":"{\"refreshToken\":\"{{refresh_token}}\"}","options":{"raw":{"language":"json"}}},"url":"{{base_url}}/auth/logout"}}
+    ]}
   ]
 }

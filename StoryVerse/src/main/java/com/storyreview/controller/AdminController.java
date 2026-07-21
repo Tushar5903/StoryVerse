@@ -71,12 +71,15 @@ public class AdminController {
 
     private UserResponse toUserResponse(User user) {
         return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
-                user.getRole(), user.isEnabled(), user.isEmailVerified(), user.isBanned());
+                user.getBio(), user.getProfileImage(), user.getRole(), user.isEnabled(), user.isEmailVerified(), user.isBanned());
     }
 
     private AuthorResponse toAuthorResponse(Author author) {
         return new AuthorResponse(author.getId(), author.getName(), author.getProfileImage(),
                 author.getDateOfBirth(), author.getPlaceOfBirth(), author.getBiography(),
+                author.getAuthorType(), author.getUser() == null ? null : author.getUser().getId(),
+                author.getUser() == null ? null : author.getUser().getUsername(),
+                author.getUser() == null ? null : author.getUser().getEmail(),
                 author.getCreatedAt(), author.getUpdatedAt());
     }
 }

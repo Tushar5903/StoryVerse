@@ -1,6 +1,7 @@
 package com.storyreview.dto.response;
 
 import com.storyreview.enums.BookType;
+import com.storyreview.enums.AuthorType;
 import com.storyreview.enums.ReviewVerdict;
 import com.storyreview.enums.Role;
 
@@ -16,12 +17,14 @@ public final class ApiResponses {
     public record MessageResponse(String message) {}
     public record ImageUploadResponse(String imageUrl) {}
 
-    public record UserResponse(Long id, String name, String username, String email, Role role, boolean enabled, boolean emailVerified, boolean banned) {}
+    public record UserResponse(Long id, String name, String username, String email, String bio, String profileImage,
+                               Role role, boolean enabled, boolean emailVerified, boolean banned) {}
     public record AuthResponse(Long userId, String name, String username, String email, Role role, String accessToken, String refreshToken) {}
 
     public record AuthorResponse(
             Long id, String name, String profileImage, LocalDate dateOfBirth,
-            String placeOfBirth, String biography, Instant createdAt, Instant updatedAt) {}
+            String placeOfBirth, String biography, AuthorType authorType, Long userId,
+            String username, String email, Instant createdAt, Instant updatedAt) {}
 
     public record BookResponse(
             Long id, String title, String subtitle, String description, String coverImage,

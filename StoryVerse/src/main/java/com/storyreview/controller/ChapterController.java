@@ -35,6 +35,28 @@ public class ChapterController {
         return chapterService.getByBookId(bookId);
     }
 
+    @GetMapping("/api/books/{bookId}/chapters/{chapterId}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    ChapterResponse getByBookAndId(@PathVariable Long bookId, @PathVariable Long chapterId) {
+        return chapterService.getById(bookId, chapterId);
+    }
+
+    @PutMapping("/api/books/{bookId}/chapters/{chapterId}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    ChapterResponse updateNested(@PathVariable Long bookId, @PathVariable Long chapterId,
+                                 @Valid @RequestBody UpdateChapterRequest request,
+                                 @AuthenticationPrincipal CurrentUser user) {
+        return chapterService.update(bookId, chapterId, request, user.id(), user.role());
+    }
+
+    @DeleteMapping("/api/books/{bookId}/chapters/{chapterId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    void deleteNested(@PathVariable Long bookId, @PathVariable Long chapterId,
+                      @AuthenticationPrincipal CurrentUser user) {
+        chapterService.delete(bookId, chapterId, user.id(), user.role());
+    }
+
     @GetMapping("/api/chapters/{chapterId}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     ChapterResponse getById(@PathVariable Long chapterId) {

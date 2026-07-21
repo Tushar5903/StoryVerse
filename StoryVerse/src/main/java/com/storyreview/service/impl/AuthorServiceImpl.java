@@ -5,6 +5,7 @@ import com.storyreview.dto.request.AuthorRequests.UpdateAuthorRequest;
 import com.storyreview.dto.response.ApiResponses.AuthorResponse;
 import com.storyreview.dto.response.ApiResponses.BookResponse;
 import com.storyreview.entity.Author;
+import com.storyreview.enums.AuthorType;
 import com.storyreview.entity.Book;
 import com.storyreview.exception.ApiException;
 import com.storyreview.repository.AuthorRepository;
@@ -36,6 +37,7 @@ public class AuthorServiceImpl implements AuthorService {
             throw new ApiException(HttpStatus.CONFLICT, "Author with this name already exists");
         }
         Author author = new Author();
+        author.setAuthorType(AuthorType.ADMIN);
         applyFields(author, request.name(), request.profileImage(), request.dateOfBirth(),
                 request.placeOfBirth(), request.biography());
         return toResponse(saveAuthor(author));
@@ -107,6 +109,9 @@ public class AuthorServiceImpl implements AuthorService {
     private AuthorResponse toResponse(Author author) {
         return new AuthorResponse(author.getId(), author.getName(), author.getProfileImage(),
                 author.getDateOfBirth(), author.getPlaceOfBirth(), author.getBiography(),
+                author.getAuthorType(), author.getUser() == null ? null : author.getUser().getId(),
+                author.getUser() == null ? null : author.getUser().getUsername(),
+                author.getUser() == null ? null : author.getUser().getEmail(),
                 author.getCreatedAt(), author.getUpdatedAt());
     }
 

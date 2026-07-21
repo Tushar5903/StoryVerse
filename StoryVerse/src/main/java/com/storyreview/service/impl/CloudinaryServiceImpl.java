@@ -34,6 +34,11 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         return upload(file, "storyverse/book-covers");
     }
 
+    @Override
+    public String uploadProfileImage(MultipartFile file) {
+        return upload(file, "storyverse/profile-images");
+    }
+
     private String upload(MultipartFile file, String folder) {
         validateFile(file);
         try {

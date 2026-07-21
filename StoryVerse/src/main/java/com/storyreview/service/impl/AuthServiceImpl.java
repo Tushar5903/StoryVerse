@@ -13,6 +13,7 @@ import com.storyreview.repository.UserRepository;
 import com.storyreview.security.JwtService;
 import com.storyreview.service.AuthService;
 import com.storyreview.service.EmailService;
+import com.storyreview.service.CloudinaryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -35,14 +36,16 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
+    private final CloudinaryService cloudinaryService;
 
-    public AuthServiceImpl(UserRepository users, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService) {
+    public AuthServiceImpl(UserRepository users, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.resetTokens = resetTokens;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.emailService = emailService;
+        this.cloudinaryService = cloudinaryService;
     }
 
     public UserResponse register(RegisterRequest request) {
@@ -62,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
         user.setEmailVerified(true);
         user = users.save(user);
         log.info("Registered user {}", user.getEmail());
-        return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getEmail(), user.getRole(), user.isEnabled(), user.isEmailVerified(), user.isBanned());
+        return toUserResponse(user);
     }
 
     @Transactional
@@ -106,6 +109,35 @@ public class AuthServiceImpl implements AuthService {
         token.setUsed(true);
     }
 
+    public void logout(LogoutRequest request, Long userId) {
+        RefreshToken token = refreshTokens.findByToken(request.refreshToken())
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+        if (!token.getUser().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Refresh token does not belong to the current user");
+        }
+        token.setRevoked(true);
+    }
+
+    public UserResponse updateProfile(Long userId, String name, String bio, org.springframework.web.multipart.MultipartFile image) {
+        User user = users.findById(userId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        if (name != null && !name.isBlank()) {
+            user.setName(name.trim());
+        }
+        if (bio != null) {
+            user.setBio(bio.trim());
+        }
+        if (image != null && !image.isEmpty()) {
+            user.setProfileImage(cloudinaryService.uploadProfileImage(image));
+        }
+        return toUserResponse(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getProfile(Long userId) {
+        return toUserResponse(users.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found")));
+    }
+
     private String issueRefresh(User user) {
         RefreshToken token = new RefreshToken();
         token.setToken(secureToken());
@@ -116,6 +148,12 @@ public class AuthServiceImpl implements AuthService {
 
     private AuthResponse authResponse(User user, String refreshToken) {
         return new AuthResponse(user.getId(), user.getName(), user.getUsername(), user.getEmail(), user.getRole(), jwtService.generateAccessToken(user), refreshToken);
+    }
+
+    private UserResponse toUserResponse(User user) {
+        return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
+                user.getBio(), user.getProfileImage(), user.getRole(), user.isEnabled(),
+                user.isEmailVerified(), user.isBanned());
     }
 
     private String secureToken() {

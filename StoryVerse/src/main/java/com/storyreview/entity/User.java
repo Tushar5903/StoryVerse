@@ -28,6 +28,12 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 80)
     private String username;
 
+    @Column(length = 2000)
+    private String bio;
+
+    @Column(name = "profile_image", length = 500)
+    private String profileImage;
+
     @Column(nullable = false, length = 190)
     private String email;
 

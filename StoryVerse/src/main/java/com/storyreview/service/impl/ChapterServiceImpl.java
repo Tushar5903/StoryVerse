@@ -31,7 +31,7 @@ public class ChapterServiceImpl implements ChapterService {
 
     @Override
     public ChapterResponse create(Long bookId, CreateChapterRequest request, Long userId, Role role) {
-        Book book = findUserBook(bookId);
+        Book book = findBook(bookId);
         assertCanManage(book, userId, role);
         if (chapters.existsByBookIdAndChapterNumber(bookId, request.chapterNumber())) {
             throw new ApiException(HttpStatus.CONFLICT, "Chapter number already exists for this book");
@@ -58,8 +58,28 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
+    public ChapterResponse update(Long bookId, Long chapterId, UpdateChapterRequest request, Long userId, Role role) {
+        Chapter chapter = findChapterForBook(bookId, chapterId);
+        assertCanManage(chapter.getBook(), userId, role);
+        if (chapters.existsByBookIdAndChapterNumberAndIdNot(bookId, request.chapterNumber(), chapterId)) {
+            throw new ApiException(HttpStatus.CONFLICT, "Chapter number already exists for this book");
+        }
+        chapter.setChapterNumber(request.chapterNumber());
+        chapter.setChapterTitle(request.chapterTitle());
+        chapter.setChapterContent(request.chapterContent());
+        return toResponse(saveChapter(chapter));
+    }
+
+    @Override
     public void delete(Long chapterId, Long userId, Role role) {
         Chapter chapter = findChapter(chapterId);
+        assertCanManage(chapter.getBook(), userId, role);
+        chapters.delete(chapter);
+    }
+
+    @Override
+    public void delete(Long bookId, Long chapterId, Long userId, Role role) {
+        Chapter chapter = findChapterForBook(bookId, chapterId);
         assertCanManage(chapter.getBook(), userId, role);
         chapters.delete(chapter);
     }
@@ -72,6 +92,12 @@ public class ChapterServiceImpl implements ChapterService {
 
     @Override
     @Transactional(readOnly = true)
+    public ChapterResponse getById(Long bookId, Long chapterId) {
+        return toResponse(findChapterForBook(bookId, chapterId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ChapterResponse> getByBookId(Long bookId) {
         if (!books.existsById(bookId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Book not found");
@@ -79,12 +105,8 @@ public class ChapterServiceImpl implements ChapterService {
         return chapters.findByBookIdOrderByChapterNumberAsc(bookId).stream().map(this::toResponse).toList();
     }
 
-    private Book findUserBook(Long bookId) {
-        Book book = books.findById(bookId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Book not found"));
-        if (book.getBookType() != BookType.USER_BOOK) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Chapters are only supported for user books");
-        }
-        return book;
+    private Book findBook(Long bookId) {
+        return books.findById(bookId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Book not found"));
     }
 
     /**
@@ -102,6 +124,14 @@ public class ChapterServiceImpl implements ChapterService {
 
     private Chapter findChapter(Long id) {
         return chapters.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Chapter not found"));
+    }
+
+    private Chapter findChapterForBook(Long bookId, Long chapterId) {
+        Chapter chapter = findChapter(chapterId);
+        if (!chapter.getBook().getId().equals(bookId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Chapter not found for this book");
+        }
+        return chapter;
     }
 
     private Chapter saveChapter(Chapter chapter) {

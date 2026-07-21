@@ -8,6 +8,7 @@ import com.storyreview.dto.response.ApiResponses.BookResponse;
 import com.storyreview.entity.Author;
 import com.storyreview.entity.Book;
 import com.storyreview.entity.User;
+import com.storyreview.enums.AuthorType;
 import com.storyreview.enums.BookType;
 import com.storyreview.enums.Role;
 import com.storyreview.exception.ApiException;
@@ -59,13 +60,15 @@ public class BookServiceImpl implements BookService {
     public BookResponse createDraft(CreateDraftBookRequest request, Long userId) {
         // Step 1 of the USER_BOOK flow: only title + author. Everything else, including
         // description, is filled in later via completeDetails() before publish().
-        validateDuplicateTitle(request.title(), request.authorId(), null);
+        User user = findUser(userId);
+        Author author = findOrCreateUserAuthor(user);
+        validateDuplicateTitle(request.title(), author.getId(), null);
         Book book = new Book();
         book.setBookType(BookType.USER_BOOK);
         book.setPublished(false);
         book.setTitle(request.title().trim());
-        book.setAuthor(findAuthor(request.authorId()));
-        book.setCreatedBy(findUser(userId));
+        book.setAuthor(author);
+        book.setCreatedBy(user);
         return toResponse(saveBook(book));
     }
 
@@ -207,6 +210,18 @@ public class BookServiceImpl implements BookService {
 
     private Author findAuthor(Long id) {
         return authors.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Author not found"));
+    }
+
+    private Author findOrCreateUserAuthor(User user) {
+        return authors.findByUserId(user.getId()).orElseGet(() -> {
+            Author author = new Author();
+            author.setName(user.getName());
+            author.setBiography(user.getBio());
+            author.setProfileImage(user.getProfileImage());
+            author.setAuthorType(AuthorType.USER);
+            author.setUser(user);
+            return authors.save(author);
+        });
     }
 
     private User findUser(Long id) {

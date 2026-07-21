@@ -4,6 +4,9 @@ import com.storyreview.dto.request.AuthRequests.*;
 import com.storyreview.dto.response.ApiResponses.AuthResponse;
 import com.storyreview.dto.response.ApiResponses.MessageResponse;
 import com.storyreview.dto.response.ApiResponses.UserResponse;
+import com.storyreview.security.CurrentUser;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.storyreview.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
@@ -29,4 +32,12 @@ public class AuthController {
     MessageResponse forgot(@Valid @RequestBody ForgotPasswordRequest request) { authService.forgotPassword(request); return new MessageResponse("Password reset instructions sent if the account exists"); }
     @PostMapping("/reset-password")
     MessageResponse reset(@Valid @RequestBody ResetPasswordRequest request) { authService.resetPassword(request); return new MessageResponse("Password reset complete"); }
+
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    MessageResponse logout(@Valid @RequestBody LogoutRequest request, @AuthenticationPrincipal CurrentUser user) {
+        authService.logout(request, user.id());
+        return new MessageResponse("Logged out");
+    }
+
 }

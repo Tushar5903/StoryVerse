@@ -31,7 +31,10 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public ReviewResponse create(CreateReviewRequest request, Long userId) {
+    public ReviewResponse create(CreateReviewRequest request, Long userId, Role role) {
+        if (role == Role.ADMIN) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Administrators cannot submit reviews");
+        }
         if (reviews.existsByUserIdAndBookId(userId, request.bookId())) {
             throw new ApiException(HttpStatus.CONFLICT, "You have already reviewed this book");
         }
@@ -39,6 +42,9 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Book not found"));
         if (!book.isPublished()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "You can't review a book that hasn't been published yet");
+        }
+        if (book.getCreatedBy().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You cannot review your own book");
         }
         Review review = new Review();
         review.setBook(book);

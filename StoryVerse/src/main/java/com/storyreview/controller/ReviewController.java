@@ -27,7 +27,7 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     ReviewResponse create(@Valid @RequestBody CreateReviewRequest request,
                           @AuthenticationPrincipal CurrentUser user) {
-        return reviewService.create(request, user.id());
+        return reviewService.create(request, user.id(), user.role());
     }
 
     @PutMapping("/{id}")
