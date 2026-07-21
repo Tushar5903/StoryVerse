@@ -1,0 +1,195 @@
+{
+  "info": {
+    "name": "StoryVerse API - Working Login Flow",
+    "description": "End-to-end Auth, Books, Reviews, and Admin requests for the MySQL-backed StoryVerse API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8081/api" },
+    { "key": "jwt_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "admin_jwt_token", "value": "" },
+    { "key": "admin_refresh_token", "value": "" },
+    { "key": "user_email", "value": "" },
+    { "key": "user_password", "value": "Password123!" },
+    { "key": "admin_email", "value": "" },
+    { "key": "admin_password", "value": "Password123!" },
+    { "key": "author_id", "value": "" },
+    { "key": "book_id", "value": "" },
+    { "key": "chapter_id", "value": "" },
+    { "key": "review_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [{ "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+            "const s = Date.now();",
+            "pm.collectionVariables.set('user_email', `postman.user.${s}@example.com`);",
+            "pm.collectionVariables.set('user_username', `postman_user_${s}`);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Reader\",\n  \"username\": \"{{user_username}}\",\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"role\": \"USER\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/auth/register"
+          }
+        },
+        {
+          "name": "Login User - save jwt_token and refresh_token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Login returns 200', () => pm.response.to.have.status(200));",
+            "const data = pm.response.json();",
+            "pm.collectionVariables.set('jwt_token', data.accessToken);",
+            "pm.collectionVariables.set('refresh_token', data.refreshToken);"
+          ] } }]
+        },
+        {
+          "name": "Register Admin",
+          "event": [{ "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+            "const s = Date.now();",
+            "pm.collectionVariables.set('admin_email', `postman.admin.${s}@example.com`);",
+            "pm.collectionVariables.set('admin_username', `postman_admin_${s}`);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Admin\",\n  \"username\": \"{{admin_username}}\",\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\",\n  \"role\": \"ADMIN\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/auth/register"
+          }
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Admin login returns 200', () => pm.response.to.have.status(200));",
+            "const data = pm.response.json();",
+            "pm.collectionVariables.set('admin_jwt_token', data.accessToken);",
+            "pm.collectionVariables.set('admin_refresh_token', data.refreshToken);"
+          ] } }]
+        },
+        {
+          "name": "Prepare Demo Author",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Author {{admin_username}}\",\n  \"placeOfBirth\": \"Pune, India\",\n  \"biography\": \"Author prepared for the end-to-end Postman flow.\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/authors"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Demo author created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('author_id', pm.response.json().id);"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Create Review Book",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Test Book {{user_username}}\",\n  \"subtitle\": \"A Database-Safe Demo\",\n  \"description\": \"A realistic Postman integration-test story.\",\n  \"language\": \"English\",\n  \"genre\": \"Science Fiction\",\n  \"tags\": [\"integration\", \"mysql\"],\n  \"publicationDate\": \"2026-07-21\",\n  \"authorId\": {{author_id}}\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/books/review"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Review book created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('book_id', pm.response.json().id);"
+          ] } }]
+        },
+        {
+          "name": "Get Book",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
+            "url": "{{base_url}}/books/{{book_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Create Review - Go For It",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": {{book_id}},\n  \"verdict\": \"GO_FOR_IT\",\n  \"message\": \"A strong demo of a book surviving a real database round trip.\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/reviews"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Review created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('review_id', pm.response.json().id);"
+          ] } }]
+        },
+        {
+          "name": "Get Reviews By Book",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
+            "url": "{{base_url}}/reviews?bookId={{book_id}}&page=0&size=20"
+          }
+        },
+        {
+          "name": "Update Review - Perfection",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_token}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"verdict\": \"PERFECTION\",\n  \"message\": \"The complete flow is reliable and repeatable.\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/reviews/{{review_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Create Author",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Integration Author {{admin_username}}\",\n  \"placeOfBirth\": \"Pune, India\",\n  \"biography\": \"An author created during the StoryVerse integration flow.\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{base_url}}/authors"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Author created', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('author_id', pm.response.json().id);"
+          ] } }]
+        },
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{admin_jwt_token}}" }] },
+            "url": "{{base_url}}/admin/dashboard"
+          }
+        }
+      ]
+    }
+  ]
+}
