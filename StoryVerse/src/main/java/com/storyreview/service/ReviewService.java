@@ -13,5 +13,8 @@ public interface ReviewService {
     ReviewResponse update(Long id, UpdateReviewRequest request, Long userId, Role role);
     void delete(Long id, Long userId, Role role);
     ReviewResponse getById(Long id);
-    Page<ReviewResponse> getByBookId(Long bookId, Pageable pageable);
+    Page<ReviewResponse> getByBookId(Long bookId, Long requesterId, Role requesterRole, Pageable pageable);
+    Page<ReviewResponse> getByUserId(Long userId, Pageable pageable);
+    Page<ReviewResponse> getByUserIdPublic(Long userId, Pageable pageable);
+    Page<ReviewResponse> getFeed(Pageable pageable);
 }

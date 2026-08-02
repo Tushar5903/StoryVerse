@@ -88,11 +88,37 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ReviewResponse> getByBookId(Long bookId, Pageable pageable) {
-        if (!books.existsById(bookId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Book not found");
+    public Page<ReviewResponse> getByBookId(Long bookId, Long requesterId, Role requesterRole, Pageable pageable) {
+        var book = books.findById(bookId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Book not found"));
+        // Reviews are public on published books; draft reviews are only visible to the owner or an admin.
+        if (!book.isPublished()) {
+            boolean canRead = requesterRole == Role.ADMIN
+                    || (requesterId != null && book.getCreatedBy().getId().equals(requesterId));
+            if (!canRead) {
+                return Page.empty(pageable);
+            }
         }
         return reviews.findByBookId(bookId, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getByUserId(Long userId, Pageable pageable) {
+        return reviews.findByUserId(userId, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getByUserIdPublic(Long userId, Pageable pageable) {
+        users.findById(userId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        return reviews.findByUserIdAndBook_PublishedTrue(userId, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getFeed(Pageable pageable) {
+        return reviews.findByBook_PublishedTrue(pageable).map(this::toResponse);
     }
 
     private Review findReview(Long id) {
@@ -109,6 +135,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private ReviewResponse toResponse(Review review) {
         return new ReviewResponse(review.getId(), review.getBook().getId(), review.getUser().getId(),
-                review.getUser().getUsername(), review.getVerdict(), review.getMessage(), review.getCreatedAt());
+                review.getUser().getUsername(), review.getUser().getName(), review.getUser().getProfileImage(),
+                review.getVerdict(), review.getMessage(), review.getCreatedAt());
     }
 }

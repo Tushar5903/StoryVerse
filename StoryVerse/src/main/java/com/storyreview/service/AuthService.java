@@ -2,6 +2,7 @@ package com.storyreview.service;
 
 import com.storyreview.dto.request.AuthRequests.*;
 import com.storyreview.dto.response.ApiResponses.AuthResponse;
+import com.storyreview.dto.response.ApiResponses.PublicUserResponse;
 import com.storyreview.dto.response.ApiResponses.UserResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,4 +15,5 @@ public interface AuthService {
     void logout(LogoutRequest request, Long userId);
     UserResponse updateProfile(Long userId, String name, String bio, MultipartFile image);
     UserResponse getProfile(Long userId);
+    PublicUserResponse getPublicProfile(String identifier);
 }

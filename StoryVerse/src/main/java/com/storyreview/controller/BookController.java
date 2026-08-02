@@ -5,6 +5,8 @@ import com.storyreview.dto.request.BookRequests.CreateDraftBookRequest;
 import com.storyreview.dto.request.BookRequests.CreateReviewBookRequest;
 import com.storyreview.dto.request.BookRequests.UpdateBookRequest;
 import com.storyreview.dto.response.ApiResponses.BookResponse;
+import com.storyreview.dto.response.ApiResponses.GenresResponse;
+import com.storyreview.enums.BookGenre;
 import com.storyreview.enums.BookType;
 import com.storyreview.security.CurrentUser;
 import com.storyreview.service.BookService;
@@ -35,6 +37,11 @@ public class BookController {
             @RequestParam(required = false) BookType type,
             Pageable pageable) {
         return bookService.search(q, authorId, genre, type, pageable);
+    }
+
+    @GetMapping("/genres")
+    GenresResponse genres() {
+        return new GenresResponse(BookGenre.displayNames());
     }
 
     @GetMapping("/mine")

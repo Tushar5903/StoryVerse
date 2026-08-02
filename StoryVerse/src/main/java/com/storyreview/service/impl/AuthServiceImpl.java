@@ -2,11 +2,13 @@ package com.storyreview.service.impl;
 
 import com.storyreview.dto.request.AuthRequests.*;
 import com.storyreview.dto.response.ApiResponses.AuthResponse;
+import com.storyreview.dto.response.ApiResponses.PublicUserResponse;
 import com.storyreview.dto.response.ApiResponses.UserResponse;
 import com.storyreview.entity.PasswordResetToken;
 import com.storyreview.entity.RefreshToken;
 import com.storyreview.entity.User;
 import com.storyreview.exception.ApiException;
+import com.storyreview.repository.AuthorRepository;
 import com.storyreview.repository.PasswordResetTokenRepository;
 import com.storyreview.repository.RefreshTokenRepository;
 import com.storyreview.repository.UserRepository;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -31,6 +34,7 @@ public class AuthServiceImpl implements AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     private static final SecureRandom RANDOM = new SecureRandom();
     private final UserRepository users;
+    private final AuthorRepository authors;
     private final RefreshTokenRepository refreshTokens;
     private final PasswordResetTokenRepository resetTokens;
     private final PasswordEncoder passwordEncoder;
@@ -38,8 +42,9 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final CloudinaryService cloudinaryService;
 
-    public AuthServiceImpl(UserRepository users, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService) {
+    public AuthServiceImpl(UserRepository users, AuthorRepository authors, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService) {
         this.users = users;
+        this.authors = authors;
         this.refreshTokens = refreshTokens;
         this.resetTokens = resetTokens;
         this.passwordEncoder = passwordEncoder;
@@ -136,6 +141,26 @@ public class AuthServiceImpl implements AuthService {
     public UserResponse getProfile(Long userId) {
         return toUserResponse(users.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found")));
+    }
+
+    @Transactional(readOnly = true)
+    public PublicUserResponse getPublicProfile(String identifier) {
+        Optional<User> byId = Optional.empty();
+        try {
+            byId = users.findById(Long.parseLong(identifier));
+        } catch (NumberFormatException ignored) {
+        }
+        if (byId.isPresent()) {
+            return toPublicProfile(byId.get());
+        }
+        return toPublicProfile(users.findByUsernameIgnoreCase(identifier)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found")));
+    }
+
+    private PublicUserResponse toPublicProfile(User user) {
+        Long authorId = authors.findByUserId(user.getId()).map(author -> author.getId()).orElse(null);
+        return new PublicUserResponse(user.getId(), user.getName(), user.getUsername(),
+                user.getProfileImage(), user.getBio(), authorId, user.getCreatedAt());
     }
 
     private String issueRefresh(User user) {

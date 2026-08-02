@@ -9,6 +9,7 @@ import com.storyreview.entity.Author;
 import com.storyreview.entity.Book;
 import com.storyreview.entity.User;
 import com.storyreview.enums.AuthorType;
+import com.storyreview.enums.BookGenre;
 import com.storyreview.enums.BookType;
 import com.storyreview.enums.Role;
 import com.storyreview.exception.ApiException;
@@ -105,7 +106,7 @@ public class BookServiceImpl implements BookService {
         book.setCoverImage(request.coverImage());
         book.setSubtitle(request.subtitle());
         book.setLanguage(request.language());
-        book.setGenre(request.genre());
+        book.setGenre(BookGenre.normalize(request.genre()));
         book.setTags(request.tags() == null ? new HashSet<>() : new HashSet<>(request.tags()));
         book.setPublicationDate(request.publicationDate());
         if (thumbnail != null && !thumbnail.isEmpty()) {
@@ -205,7 +206,7 @@ public class BookServiceImpl implements BookService {
         book.setDescription(description);
         book.setCoverImage(coverImage);
         book.setLanguage(language);
-        book.setGenre(genre);
+        book.setGenre(BookGenre.normalize(genre));
         book.setTags(tags == null ? new HashSet<>() : new HashSet<>(tags));
         book.setPublicationDate(publicationDate);
         book.setAuthor(findAuthor(authorId));

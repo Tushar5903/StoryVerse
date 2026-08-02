@@ -1,0 +1,230 @@
+.book-editor {
+    max-width: 1050px;
+    margin: auto;
+    padding: 75px 38px;
+    color: var(--sv-cream)
+}
+
+.editor-head {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    gap: 26px;
+    align-items: start;
+    border-bottom: 1px solid var(--sv-line);
+    padding-bottom: 45px
+}
+
+.editor-back {
+    font: 11px var(--sv-mono);
+    color: var(--sv-muted);
+    text-decoration: none
+}
+
+.editor-back:hover {
+    color: var(--sv-violet)
+}
+
+.editor-head h1 {
+    font: 500 46px var(--sv-serif);
+    margin: 10px 0 8px
+}
+
+.editor-head p {
+    color: var(--sv-muted);
+    line-height: 1.6
+}
+
+.editor-mode {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 26px 0 4px
+}
+
+.editor-mode-label {
+    font: 10px var(--sv-mono);
+    color: var(--sv-muted);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin-right: 6px
+}
+
+.editor-mode button {
+    font: 11px var(--sv-mono);
+    color: var(--sv-muted);
+    background: var(--sv-panel);
+    border: 1px solid var(--sv-line);
+    padding: 9px 15px;
+    cursor: pointer
+}
+
+.editor-mode button.active {
+    color: var(--sv-cream);
+    border-color: var(--sv-violet)
+}
+
+.editor-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 38px;
+    padding-top: 40px
+}
+
+.editor-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px
+}
+
+.editor-cover {
+    aspect-ratio: 3/4;
+    background: linear-gradient(145deg, #2e2138, #836e9d);
+    display: grid;
+    place-items: center;
+    font: 22px var(--sv-serif);
+    text-align: center;
+    line-height: 1.5
+}
+
+.editor-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover
+}
+
+.editor-cover-input {
+    border: 1px dashed var(--sv-line);
+    padding: 12px;
+    font: 11px var(--sv-mono);
+    color: var(--sv-muted);
+    cursor: pointer;
+    text-align: center
+}
+
+.editor-cover-input input {
+    display: none
+}
+
+.editor-sidebar label {
+    font: 11px var(--sv-mono);
+    color: var(--sv-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+.editor-sidebar label input {
+    background: var(--sv-panel);
+    border: 1px solid var(--sv-line);
+    color: var(--sv-cream);
+    padding: 10px;
+    font: 12px var(--sv-mono)
+}
+
+.editor-note {
+    font: 10px var(--sv-mono);
+    color: var(--sv-muted);
+    line-height: 1.6
+}
+
+.editor-main {
+    display: flex;
+    flex-direction: column;
+    gap: 18px
+}
+
+.editor-main label {
+    font: 11px var(--sv-mono);
+    color: var(--sv-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 7px
+}
+
+.editor-main input,
+.editor-main select,
+.editor-main textarea {
+    background: var(--sv-panel);
+    border: 1px solid var(--sv-line);
+    color: var(--sv-cream);
+    padding: 13px;
+    font: 15px var(--sv-sans);
+    resize: vertical
+}
+
+.editor-main input:focus,
+.editor-main select:focus,
+.editor-main textarea:focus {
+    outline: none;
+    border-color: var(--sv-violet)
+}
+
+.editor-main textarea {
+    line-height: 1.6
+}
+
+.editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px
+}
+
+.editor-grid label:last-child {
+    grid-column: 1/-1
+}
+
+.editor-hint {
+    font: 12px var(--sv-mono);
+    color: var(--sv-muted);
+    line-height: 1.7;
+    border-top: 1px solid var(--sv-line);
+    padding-top: 16px
+}
+
+.editor-hint a {
+    color: var(--sv-violet)
+}
+
+.editor-hint strong {
+    color: var(--sv-cream)
+}
+
+.editor-notice {
+    background: rgba(113, 195, 173, .08);
+    border: 1px solid var(--sv-teal);
+    color: var(--sv-teal);
+    padding: 13px 17px;
+    font: 12px var(--sv-mono);
+    margin-top: 24px
+}
+
+.editor-empty {
+    border: 1px dashed var(--sv-line);
+    padding: 40px;
+    color: var(--sv-muted);
+    text-align: center;
+    font: 12px var(--sv-mono);
+    margin-top: 40px
+}
+
+@media(max-width:800px) {
+    .book-editor {
+        padding: 48px 20px
+    }
+
+    .editor-head {
+        grid-template-columns: 1fr
+    }
+
+    .editor-layout {
+        grid-template-columns: 1fr
+    }
+
+    .editor-grid {
+        grid-template-columns: 1fr
+    }
+
+    .editor-head h1 {
+        font-size: 36px
+    }
+}

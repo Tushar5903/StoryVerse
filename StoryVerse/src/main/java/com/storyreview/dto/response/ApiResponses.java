@@ -37,8 +37,19 @@ public final class ApiResponses {
             String chapterContent, Instant createdAt, Instant updatedAt) {}
 
     public record ReviewResponse(
-            Long id, Long bookId, Long userId, String username, ReviewVerdict verdict,
-            String message, Instant createdAt) {}
+            Long id, Long bookId, Long userId, String username, String name, String profileImage,
+            ReviewVerdict verdict, String message, Instant createdAt) {}
+
+    public record PublicUserResponse(
+            Long id, String name, String username, String profileImage, String bio,
+            Long authorId, Instant joinedAt) {}
+
+    public record ProgressResponse(Long bookId, Long chapterId, Instant markedAt) {}
+
+    public record BookProgressResponse(
+            Long bookId, String title, String coverImage, String thumbnailUrl,
+            String genre, String authorName, long totalChapters, List<ProgressResponse> chapters) {}
 
     public record AdminDashboardResponse(long users, long books, long reviews) {}
+    public record GenresResponse(java.util.List<String> genres) {}
 }

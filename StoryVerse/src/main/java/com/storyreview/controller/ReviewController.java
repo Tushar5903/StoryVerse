@@ -44,6 +44,12 @@ public class ReviewController {
         reviewService.delete(id, user.id(), user.role());
     }
 
+    @GetMapping("/mine")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    Page<ReviewResponse> getMine(@AuthenticationPrincipal CurrentUser user, Pageable pageable) {
+        return reviewService.getByUserId(user.id(), pageable);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     ReviewResponse getById(@PathVariable Long id) {
@@ -51,8 +57,16 @@ public class ReviewController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    Page<ReviewResponse> getByBook(@RequestParam Long bookId, Pageable pageable) {
-        return reviewService.getByBookId(bookId, pageable);
+    Page<ReviewResponse> getByBookOrUser(@RequestParam(required = false) Long bookId,
+                                         @RequestParam(required = false) Long userId,
+                                         @AuthenticationPrincipal CurrentUser user, Pageable pageable) {
+        if (userId != null) {
+            return reviewService.getByUserIdPublic(userId, pageable);
+        }
+        if (bookId != null) {
+            return reviewService.getByBookId(bookId, user == null ? null : user.id(),
+                    user == null ? null : user.role(), pageable);
+        }
+        return reviewService.getFeed(pageable);
     }
 }

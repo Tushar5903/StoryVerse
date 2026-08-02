@@ -1,0 +1,13 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { FreeMode } from 'swiper/modules'
+import { motion } from 'framer-motion'
+import { useSelector } from 'react-redux'
+import { FiArrowRight, FiArrowUpRight } from 'react-icons/fi'
+import { listBooks } from '../../services/booksApi'
+import SharedNav from '../../components/layout/SharedNav/SharedNav'
+import './LandingPage.css'
+import 'swiper/css'
+import 'swiper/css/free-mode'
+export default function LandingPage(){const user=useSelector(state=>state.auth.user);const [books,setBooks]=useState([]);useEffect(()=>{listBooks('?size=20&sort=updatedAt,desc').then(page=>setBooks(page.content||[])).catch(()=>{})},[]);const words=['Read the','profound.','Write the','unforgettable.'];return <><SharedNav/><main className="new-landing"><section className="new-hero"><div><div className="eyebrow">THE DIGITAL LITERARY ARCHIVE</div><motion.h1 initial="hidden" animate="show" variants={{hidden:{},show:{transition:{staggerChildren:.1}}}}>{words.map((word,index)=><motion.span key={word} className={index%2?'violet-word':''} variants={{hidden:{opacity:0,y:18},show:{opacity:1,y:0}}}>{word}{index===1&&<br/>}</motion.span>)}</motion.h1><p>A home for stories that linger. Discover thoughtful reviews, find your next obsession, and leave a little of yourself on the page.</p><div className="new-hero-actions">{user ? <><Link className="button" to="/reader-dashboard">Reader Dashboard <FiArrowUpRight /></Link><Link className="text-link" to="/dashboard">Writer Dashboard <FiArrowRight /></Link></> : <><Link className="button" to="/explore">Start reading <FiArrowUpRight /></Link><Link className="text-link" to="/register">Start writing <FiArrowRight /></Link></>}</div></div><div className="new-ring">SV<small>ARCHIVE</small></div></section><section className="new-shelf"><div className="eyebrow">CURATED FOR YOU</div><h2>Trending manuscripts</h2><Swiper modules={[FreeMode]} freeMode spaceBetween={16} slidesPerView="auto">{books.map(book=><SwiperSlide className="new-slide" key={book.id}><Link to={`/books/${book.id}`}><div className="new-cover">{book.coverImage||book.thumbnailUrl?<img src={book.coverImage||book.thumbnailUrl} alt=""/>:<span>SV</span>}</div><h3>{book.title}</h3><p>{book.bookType||'Story'} · {book.publicationDate?String(book.publicationDate).slice(0,4):'—'}</p></Link></SwiperSlide>)}</Swiper></section></main></>}

@@ -1,11 +1,13 @@
 package com.storyreview.controller;
 
+import com.storyreview.dto.response.ApiResponses.PublicUserResponse;
 import com.storyreview.dto.response.ApiResponses.UserResponse;
 import com.storyreview.security.CurrentUser;
 import com.storyreview.service.AuthService;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +29,11 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     UserResponse getProfile(@AuthenticationPrincipal CurrentUser user) {
         return authService.getProfile(user.id());
+    }
+
+    @GetMapping("/{identifier}")
+    PublicUserResponse getPublicProfile(@PathVariable String identifier) {
+        return authService.getPublicProfile(identifier);
     }
 
     @PutMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

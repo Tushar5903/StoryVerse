@@ -30,15 +30,15 @@ public class ChapterController {
     }
 
     @GetMapping("/api/books/{bookId}/chapters")
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    List<ChapterResponse> getByBook(@PathVariable Long bookId) {
-        return chapterService.getByBookId(bookId);
+    List<ChapterResponse> getByBook(@PathVariable Long bookId,
+                                    @AuthenticationPrincipal CurrentUser user) {
+        return chapterService.getByBookId(bookId, user == null ? null : user.id(), user == null ? null : user.role());
     }
 
     @GetMapping("/api/books/{bookId}/chapters/{chapterId}")
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    ChapterResponse getByBookAndId(@PathVariable Long bookId, @PathVariable Long chapterId) {
-        return chapterService.getById(bookId, chapterId);
+    ChapterResponse getByBookAndId(@PathVariable Long bookId, @PathVariable Long chapterId,
+                                   @AuthenticationPrincipal CurrentUser user) {
+        return chapterService.getById(bookId, chapterId, user == null ? null : user.id(), user == null ? null : user.role());
     }
 
     @PutMapping("/api/books/{bookId}/chapters/{chapterId}")

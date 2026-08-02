@@ -92,17 +92,31 @@ public class ChapterServiceImpl implements ChapterService {
 
     @Override
     @Transactional(readOnly = true)
-    public ChapterResponse getById(Long bookId, Long chapterId) {
+    public ChapterResponse getById(Long bookId, Long chapterId, Long requesterId, Role requesterRole) {
+        Book book = findBook(bookId);
+        assertReadable(book, requesterId, requesterRole);
         return toResponse(findChapterForBook(bookId, chapterId));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ChapterResponse> getByBookId(Long bookId) {
-        if (!books.existsById(bookId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Book not found");
-        }
+    public List<ChapterResponse> getByBookId(Long bookId, Long requesterId, Role requesterRole) {
+        Book book = findBook(bookId);
+        assertReadable(book, requesterId, requesterRole);
         return chapters.findByBookIdOrderByChapterNumberAsc(bookId).stream().map(this::toResponse).toList();
+    }
+
+    /**
+     * Chapters of published books are public. Draft chapters are only visible to the owner or an admin.
+     */
+    private void assertReadable(Book book, Long requesterId, Role requesterRole) {
+        if (book.isPublished()) {
+            return;
+        }
+        if (requesterRole == Role.ADMIN || (requesterId != null && book.getCreatedBy().getId().equals(requesterId))) {
+            return;
+        }
+        throw new ApiException(HttpStatus.NOT_FOUND, "Book not found");
     }
 
     private Book findBook(Long bookId) {
