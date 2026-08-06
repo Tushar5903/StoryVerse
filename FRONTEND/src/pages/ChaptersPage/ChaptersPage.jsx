@@ -5,13 +5,14 @@ import { FiArrowLeft, FiArrowRight } from 'react-icons/fi'
 import { getBook, listMyBooks, publishBook } from '../../services/booksApi'
 import { createChapter, deleteChapter, listChapters, updateChapter } from '../../services/chaptersApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
+import Footer from '../../components/layout/Footer/Footer'
 import './ChaptersPage.css'
 
 export default function ChaptersPage() {
   const [params] = useSearchParams()
   const bookId = params.get('bookId')
 
-  return <><SharedNav />{bookId ? <ChapterEditor bookId={bookId} /> : <BookPicker />}</>
+  return <><SharedNav />{bookId ? <ChapterEditor bookId={bookId} /> : <BookPicker />}<Footer /></>
 }
 
 function BookPicker() {

@@ -5,6 +5,7 @@ import { FiArrowUpRight } from 'react-icons/fi'
 import { deleteBook, listMyBooks, publishBook } from '../../services/booksApi'
 import { getMe } from '../../services/usersApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
+import Footer from '../../components/layout/Footer/Footer'
 import './WriterDashboardPage.css'
 
 export default function WriterDashboardPage() {
@@ -75,5 +76,6 @@ export default function WriterDashboardPage() {
       </section>
       <p className="writer-account">Publishing as <strong>@{user?.username || 'writer'}</strong> — your author profile updates automatically.</p>
     </main>
+    <Footer />
   </>
 }

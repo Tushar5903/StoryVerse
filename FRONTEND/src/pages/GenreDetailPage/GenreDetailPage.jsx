@@ -5,6 +5,7 @@ import { FiArrowLeft } from 'react-icons/fi'
 import { listBooks } from '../../services/booksApi'
 import { fadeInUp } from '../../animations/variants'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
+import Footer from '../../components/layout/Footer/Footer'
 import { DEFAULT_GENRES } from '../../data/genres'
 import './GenreDetailPage.css'
 
@@ -34,6 +35,7 @@ export default function GenreDetailPage({ genre }) {
       </header>
       <GenreResults key={name} name={name} />
     </main>
+    <Footer />
   </>
 }
 

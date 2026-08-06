@@ -6,6 +6,7 @@ import { getBook, listBooks } from '../../services/booksApi'
 import { listUserReviews } from '../../services/reviewsApi'
 import VerdictBadge from '../../components/common/VerdictBadge/VerdictBadge'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
+import Footer from '../../components/layout/Footer/Footer'
 import '../ReviewsPage/ReviewsPage.css'
 
 const filterTabs = [['ALL', 'All'], ['SKIP', 'Skip'], ['TIMEPASS', 'Timepass'], ['GO_FOR_IT', 'Go For It'], ['PERFECTION', 'Perfection']]
@@ -67,7 +68,7 @@ export default function UserProfilePage({ username }) {
   const joinedAt = useMemo(() => user?.joinedAt ? new Date(user.joinedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Recently', [user])
 
   if (notFound) {
-    return <><SharedNav /><main className="reviews-page"><div className="reviews-empty" style={{ gridColumn: '1 / -1' }}><div><FiStar /></div><h2>Reader not found.</h2><p>{error}</p><Link className="button ghost" to="/explore">Back to explore</Link></div></main></>
+    return <><SharedNav /><main className="reviews-page"><div className="reviews-empty" style={{ gridColumn: '1 / -1' }}><div><FiStar /></div><h2>Reader not found.</h2><p>{error}</p><Link className="button ghost" to="/explore">Back to explore</Link></div></main><Footer /></>
   }
 
   return <><SharedNav /><main className="reviews-page"><aside className="review-profile-card"><div className="review-profile-avatar">{user?.profileImage ? <img src={user.profileImage} alt="" /> : (user?.name || 'U').slice(0, 1)}</div><h2>{user?.name || 'StoryVerse reader'}</h2><strong>@{user?.username || 'reader'}</strong><div className="review-profile-stats"><span><b>{reviews.length}</b>Reviews Posted</span><span><b>{books.length}</b>Collections</span></div><p>{user?.bio || 'I love stories, books, and thoughtful criticism.'}</p><div className="review-follow"><FiCalendar /> Joined {joinedAt}</div></aside><section className="review-feed"><div className="review-mode"><button className={mode === 'reviews' ? 'active' : ''} onClick={() => setMode('reviews')}><FiStar /> Reviews</button><button className={mode === 'collection' ? 'active' : ''} onClick={() => setMode('collection')}><FiBookOpen /> Collections</button></div>{mode === 'reviews' ? <>
@@ -78,5 +79,5 @@ export default function UserProfilePage({ username }) {
     <div className="eyebrow">THEIR WORKS</div>
     <h2 className="collection-title">Books they wrote</h2>
     {books.length ? <div className="collection-list">{books.map(book => <div className="collection-row" key={book.id}><Link className="collection-cover" to={`/books/${book.id}`}>{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</Link><div className="collection-main"><h3><Link to={`/books/${book.id}`}>{book.title}</Link></h3><p>{book.genre || 'Story'} · {book.language || 'EN'} · {book.bookType === 'REVIEW_BOOK' ? 'Review book' : 'Story'}</p><div className="collection-actions"><Link to={`/books/${book.id}`}>View story</Link></div></div><span className={`collection-status ${book.published ? 'published' : 'draft'}`}>{book.published ? 'Published' : 'Draft'}</span></div>)}</div> : <div className="reviews-empty"><div><FiBookOpen /></div><h2>No collection yet.</h2><p>When this reader writes a story, it will live here.</p></div>}
-  </>}</section><aside className="review-aside-right"><div className="review-widget"><FiUsers style={{ fontSize: 22, marginBottom: 10, color: 'var(--sv-violet)' }} /><br />More widgets<br />coming soon.</div></aside></main></>
+  </>}</section><aside className="review-aside-right"><div className="review-widget"><FiUsers style={{ fontSize: 22, marginBottom: 10, color: 'var(--sv-violet)' }} /><br />More widgets<br />coming soon.</div></aside></main><Footer /></>
 }

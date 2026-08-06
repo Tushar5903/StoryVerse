@@ -6,6 +6,7 @@ import { createDraft, createReviewBook, getBook, updateBook, uploadBookCover } f
 import { listAuthors } from '../../services/authorsApi'
 import { getMe } from '../../services/usersApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
+import Footer from '../../components/layout/Footer/Footer'
 import { DEFAULT_GENRES } from '../../data/genres'
 import './BookEditorPage.css'
 
@@ -131,5 +132,6 @@ export default function BookEditorPage({ id }) {
           </section>
         </form>}
     </main>
+    <Footer />
   </>
 }

@@ -4,6 +4,7 @@ import { FiArrowUpRight, FiBookOpen, FiCheckCircle, FiStar } from 'react-icons/f
 import { getProgress, markRead } from '../../services/progressApi'
 import { listMyReviews } from '../../services/reviewsApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
+import Footer from '../../components/layout/Footer/Footer'
 import './ReaderDashboardPage.css'
 
 const readingKey = key => key.startsWith('sv_reading_')
@@ -105,5 +106,6 @@ export default function ReaderDashboardPage() {
             })}</div>}
       </section>
     </main>
+    <Footer />
   </>
 }
