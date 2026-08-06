@@ -62,7 +62,7 @@ public class BookServiceImpl implements BookService {
         book.setBookType(BookType.REVIEW_BOOK);
         book.setPublished(true);
         applyFields(book, request.title(), request.subtitle(), request.description(), request.coverImage(),
-                request.language(), request.genre(), request.tags(), request.publicationDate(), request.authorId(),
+                request.language(), request.genres(), request.tags(), request.publicationDate(), request.authorId(),
                 thumbnail == null || thumbnail.isEmpty() ? null : cloudinaryUpload(thumbnail));
         book.setCreatedBy(findUser(adminId));
         return toResponse(saveBook(book));
@@ -106,7 +106,7 @@ public class BookServiceImpl implements BookService {
         book.setCoverImage(request.coverImage());
         book.setSubtitle(request.subtitle());
         book.setLanguage(request.language());
-        book.setGenre(BookGenre.normalize(request.genre()));
+        book.setGenres(BookGenre.normalizeAll(request.genres()));
         book.setTags(request.tags() == null ? new HashSet<>() : new HashSet<>(request.tags()));
         book.setPublicationDate(request.publicationDate());
         if (thumbnail != null && !thumbnail.isEmpty()) {
@@ -144,7 +144,7 @@ public class BookServiceImpl implements BookService {
         assertCanModify(book, userId, role);
         validateDuplicateTitle(request.title(), request.authorId(), id);
         applyFields(book, request.title(), request.subtitle(), request.description(), request.coverImage(),
-                request.language(), request.genre(), request.tags(), request.publicationDate(), request.authorId(),
+                request.language(), request.genres(), request.tags(), request.publicationDate(), request.authorId(),
                 thumbnail == null || thumbnail.isEmpty() ? null : cloudinaryUpload(thumbnail));
         return toResponse(saveBook(book));
     }
@@ -184,7 +184,16 @@ public class BookServiceImpl implements BookService {
             spec = spec.and((root, cq, cb) -> cb.equal(root.get("author").get("id"), authorId));
         }
         if (genre != null && !genre.isBlank()) {
-            spec = spec.and((root, cq, cb) -> cb.equal(cb.lower(root.get("genre")), genre.toLowerCase()));
+            // Match books that carry the requested genre among their (possibly several) genres.
+            // Unknown values fall through to an exact match, which simply yields no results.
+            String normalized;
+            try {
+                normalized = BookGenre.normalize(genre);
+            } catch (ApiException ignored) {
+                normalized = genre;
+            }
+            String match = normalized;
+            spec = spec.and((root, cq, cb) -> cb.isMember(match, root.get("genres")));
         }
         if (bookType != null) {
             spec = spec.and((root, cq, cb) -> cb.equal(root.get("bookType"), bookType));
@@ -199,14 +208,14 @@ public class BookServiceImpl implements BookService {
     }
 
     private void applyFields(Book book, String title, String subtitle, String description, String coverImage,
-                             String language, String genre, Set<String> tags,
+                             String language, Set<String> genres, Set<String> tags,
                              java.time.LocalDate publicationDate, Long authorId, String thumbnailUrl) {
         book.setTitle(title.trim());
         book.setSubtitle(subtitle);
         book.setDescription(description);
         book.setCoverImage(coverImage);
         book.setLanguage(language);
-        book.setGenre(BookGenre.normalize(genre));
+        book.setGenres(BookGenre.normalizeAll(genres));
         book.setTags(tags == null ? new HashSet<>() : new HashSet<>(tags));
         book.setPublicationDate(publicationDate);
         book.setAuthor(findAuthor(authorId));
@@ -275,8 +284,10 @@ public class BookServiceImpl implements BookService {
     }
 
     private BookResponse toResponse(Book book) {
+        String primaryGenre = book.getGenres().isEmpty() ? null : book.getGenres().iterator().next();
         return new BookResponse(book.getId(), book.getTitle(), book.getSubtitle(), book.getDescription(),
-                book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(), book.getGenre(),
+                book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(),
+                primaryGenre, book.getGenres(),
                 book.getTags(), book.getPublicationDate(), book.getCreatedBy().getId(), book.getAuthor().getId(),
                 book.getAuthor().getName(), book.getCreatedAt(), book.getUpdatedAt());
     }

@@ -107,8 +107,10 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     private BookResponse toBookResponse(Book book) {
+        String primaryGenre = book.getGenres().isEmpty() ? null : book.getGenres().iterator().next();
         return new BookResponse(book.getId(), book.getTitle(), book.getSubtitle(), book.getDescription(),
-                book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(), book.getGenre(),
+                book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(),
+                primaryGenre, book.getGenres(),
                 book.getTags(), book.getPublicationDate(), book.getCreatedBy().getId(), book.getAuthor().getId(),
                 book.getAuthor().getName(), book.getCreatedAt(), book.getUpdatedAt());
     }

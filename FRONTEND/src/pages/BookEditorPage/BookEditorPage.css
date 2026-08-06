@@ -173,6 +173,45 @@
     grid-column: 1/-1
 }
 
+.editor-genre-label {
+    grid-column: 1/-1
+}
+
+.editor-genre-hint {
+    font: 10px var(--sv-mono);
+    color: var(--sv-muted);
+    letter-spacing: .08em;
+    text-transform: none
+}
+
+.editor-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px
+}
+
+.editor-genres button {
+    font: 11px var(--sv-mono);
+    color: var(--sv-muted);
+    background: var(--sv-panel);
+    border: 1px solid var(--sv-line);
+    padding: 8px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease, background .2s ease
+}
+
+.editor-genres button:hover {
+    color: var(--sv-cream);
+    border-color: var(--sv-violet)
+}
+
+.editor-genres button.selected {
+    color: var(--sv-cream);
+    background: rgba(167, 139, 250, .12);
+    border-color: var(--sv-violet)
+}
+
 .editor-hint {
     font: 12px var(--sv-mono);
     color: var(--sv-muted);

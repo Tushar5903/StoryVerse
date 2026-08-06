@@ -41,7 +41,7 @@ function BookCard({ book, count, index }) {
 
 function Row({ label, children }) {
   const ref = useRef(null)
-  const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false })
+  const suppressClick = useRef(false)
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -57,25 +57,32 @@ function Row({ label, children }) {
   }, [])
   const onPointerDown = event => {
     if (event.pointerType !== 'mouse') return
-    drag.current = { active: true, startX: event.clientX, startLeft: ref.current.scrollLeft, moved: false }
-    event.currentTarget.classList.add('dragging')
-    event.currentTarget.setPointerCapture(event.pointerId)
-  }
-  const onPointerMove = event => {
-    const d = drag.current
-    if (!d.active) return
-    const dx = event.clientX - d.startX
-    if (Math.abs(dx) > 4) d.moved = true
-    if (d.moved) ref.current.scrollLeft = d.startLeft - dx
-  }
-  const endDrag = event => {
-    drag.current.active = false
-    if (event.currentTarget) event.currentTarget.classList.remove('dragging')
+    const el = ref.current
+    suppressClick.current = false
+    const startX = event.clientX
+    const startLeft = el.scrollLeft
+    let moved = false
+    const onMove = moveEvent => {
+      const dx = moveEvent.clientX - startX
+      if (Math.abs(dx) > 4) moved = true
+      if (moved) el.scrollLeft = startLeft - dx
+    }
+    const onUp = () => {
+      suppressClick.current = moved
+      el.classList.remove('dragging')
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('blur', onUp)
+    }
+    el.classList.add('dragging')
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('blur', onUp)
   }
   const onClickCapture = event => {
-    if (drag.current.moved) { event.preventDefault(); event.stopPropagation(); drag.current.moved = false }
+    if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); suppressClick.current = false }
   }
-  return <div className="discover-row" role="list" aria-label={label} tabIndex="0" ref={ref} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerLeave={endDrag} onClickCapture={onClickCapture}>{children}</div>
+  return <div className="discover-row" role="list" aria-label={label} tabIndex="0" ref={ref} onPointerDown={onPointerDown} onClickCapture={onClickCapture}>{children}</div>
 }
 
 function Section({ title, subtitle, state, view }) {

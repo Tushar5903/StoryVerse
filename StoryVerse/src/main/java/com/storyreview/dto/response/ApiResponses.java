@@ -28,7 +28,7 @@ public final class ApiResponses {
 
     public record BookResponse(
             Long id, String title, String subtitle, String description, String coverImage, String thumbnailUrl,
-            BookType bookType, boolean published, String language, String genre, Set<String> tags,
+            BookType bookType, boolean published, String language, String genre, Set<String> genres, Set<String> tags,
             LocalDate publicationDate, Long createdById, Long authorId, String authorName,
             Instant createdAt, Instant updatedAt) {}
 
@@ -52,4 +52,6 @@ public final class ApiResponses {
 
     public record AdminDashboardResponse(long users, long books, long reviews) {}
     public record GenresResponse(java.util.List<String> genres) {}
+    public record ContactMessageResponse(
+            Long id, String name, String email, String subject, String message, Instant createdAt) {}
 }

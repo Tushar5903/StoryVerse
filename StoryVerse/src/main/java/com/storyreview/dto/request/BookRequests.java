@@ -16,7 +16,7 @@ public final class BookRequests {
             @NotBlank @Size(max = 4000) String description,
             @Size(max = 500) String coverImage,
             @Size(max = 80) String language,
-            @Size(max = 80) String genre,
+            @Size(max = 10) Set<@NotBlank @Size(max = 80) String> genres,
             Set<@NotBlank @Size(max = 80) String> tags,
             LocalDate publicationDate,
             @NotNull Long authorId) {}
@@ -30,7 +30,7 @@ public final class BookRequests {
             @Size(max = 500) String coverImage,
             @Size(max = 240) String subtitle,
             @Size(max = 80) String language,
-            @Size(max = 80) String genre,
+            @Size(max = 10) Set<@NotBlank @Size(max = 80) String> genres,
             Set<@NotBlank @Size(max = 80) String> tags,
             LocalDate publicationDate) {}
 
@@ -40,7 +40,7 @@ public final class BookRequests {
             @Size(max = 4000) String description,
             @Size(max = 500) String coverImage,
             @Size(max = 80) String language,
-            @Size(max = 80) String genre,
+            @Size(max = 10) Set<@NotBlank @Size(max = 80) String> genres,
             Set<@NotBlank @Size(max = 80) String> tags,
             LocalDate publicationDate,
             @NotNull Long authorId) {}

@@ -57,8 +57,10 @@ public class Book extends BaseEntity {
     @Column(length = 80)
     private String language;
 
-    @Column(length = 80)
-    private String genre;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "book_genres", joinColumns = @JoinColumn(name = "book_id"))
+    @Column(name = "genre", length = 80)
+    private Set<String> genres = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "book_tags", joinColumns = @JoinColumn(name = "book_id"))

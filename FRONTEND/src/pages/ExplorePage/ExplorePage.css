@@ -11,7 +11,7 @@
 .discover-viewall:hover{color:#fff;border-color:var(--sv-violet)}
 .discover-row{display:flex;flex-direction:row;flex-wrap:nowrap;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:4px 0 14px;cursor:grab}.discover-row:focus-visible{outline:2px solid var(--sv-violet);outline-offset:4px}
 .discover-row::-webkit-scrollbar{display:none}
-.discover-row.dragging{cursor:grabbing;scroll-snap-type:none}
+.discover-row.dragging{cursor:grabbing;scroll-snap-type:none;user-select:none;-webkit-user-select:none}
 .discover-motion{flex:0 0 auto;width:200px;height:400px;scroll-snap-align:start}
 .discover-card{display:flex;flex-direction:column;width:100%;height:100%;border-radius:16px;overflow:hidden;background:#131318;border:1px solid rgba(255,255,255,.07);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
 .discover-card:hover{transform:translateY(-6px);box-shadow:0 24px 48px rgba(0,0,0,.55),0 0 0 1px rgba(169,139,216,.25);border-color:rgba(169,139,216,.35)}

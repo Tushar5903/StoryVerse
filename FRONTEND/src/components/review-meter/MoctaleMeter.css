@@ -1,0 +1,134 @@
+.moctale-meter {
+    max-width: 800px;
+    margin: 56px auto 0;
+    padding: 42px 36px 34px;
+    text-align: center;
+    border-radius: 20px;
+    backdrop-filter: blur(14px);
+    color: var(--sv-cream)
+}
+
+.moctale-meter__title {
+    font: 600 28px var(--sv-serif);
+    letter-spacing: .01em;
+    margin: 0 0 28px
+}
+
+.moctale-meter__gauge {
+    position: relative;
+    width: min(100%, 520px);
+    margin: 0 auto
+}
+
+.moctale-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible
+}
+
+.moctale-arc {
+    fill: none
+}
+
+.moctale-center {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none
+}
+
+.moctale-center strong {
+    font: 700 64px var(--sv-serif);
+    line-height: 1;
+    transition: color .25s ease-in-out
+}
+
+.moctale-center span {
+    font: 17px var(--sv-sans);
+    color: var(--sv-muted)
+}
+
+.moctale-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px 40px;
+    margin-top: 28px
+}
+
+.moctale-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: none;
+    border: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: var(--sv-muted);
+    font: 600 13px var(--sv-sans);
+    cursor: pointer;
+    transition: color .2s ease-in-out, background .2s ease-in-out
+}
+
+.moctale-legend-item:hover,
+.moctale-legend-item.selected {
+    color: var(--sv-cream);
+    background: rgba(255, 255, 255, .06)
+}
+
+.moctale-legend-item i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%
+}
+
+.moctale-legend-item b {
+    color: var(--sv-cream);
+    font-weight: 700
+}
+
+@media(max-width:900px) {
+    .moctale-meter__gauge {
+        width: min(100%, 440px)
+    }
+
+    .moctale-center strong {
+        font-size: 56px
+    }
+}
+
+@media(max-width:600px) {
+    .moctale-meter {
+        margin-top: 44px;
+        padding: 30px 18px 24px
+    }
+
+    .moctale-meter__title {
+        font-size: 22px;
+        margin-bottom: 20px
+    }
+
+    .moctale-meter__gauge {
+        width: min(100%, 300px)
+    }
+
+    .moctale-center strong {
+        font-size: 44px
+    }
+
+    .moctale-center span {
+        font-size: 13px
+    }
+
+    .moctale-legend {
+        gap: 8px 22px;
+        font-size: 12px
+    }
+}

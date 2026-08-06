@@ -82,7 +82,8 @@ public class ProgressServiceImpl implements ProgressService {
                     .map(r -> new ProgressResponse(r.getBook().getId(), r.getChapter().getId(), r.getUpdatedAt()))
                     .toList();
             result.add(new BookProgressResponse(book.getId(), book.getTitle(), book.getCoverImage(),
-                    book.getThumbnailUrl(), book.getGenre(), book.getAuthor().getName(),
+                    book.getThumbnailUrl(), book.getGenres().isEmpty() ? null : book.getGenres().iterator().next(),
+                    book.getAuthor().getName(),
                     chapterRepo.countByBookId(book.getId()), chapters));
         }
         return result;
