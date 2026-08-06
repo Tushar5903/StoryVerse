@@ -43,7 +43,7 @@ function ChapterEditor({ bookId }) {
   useEffect(() => { load() }, [bookId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextNumber = useMemo(() => chapters.reduce((max, chapter) => Math.max(max, chapter.chapterNumber || 0), 0) + 1, [chapters])
-  const set = field => event => setForm(current => ({ ...current, [field]: event.target.value }))
+  const set = field => event => setForm(current => ({ ...current, [field]: field === 'chapterNumber' ? (Number(event.target.value) || 1) : event.target.value }))
 
   const startNew = () => { setEditingId(null); setForm({ chapterNumber: nextNumber, chapterTitle: '', chapterContent: '' }) }
   const startEdit = chapter => { setEditingId(chapter.id); setForm({ chapterNumber: chapter.chapterNumber, chapterTitle: chapter.chapterTitle || chapter.title || '', chapterContent: chapter.chapterContent || chapter.content || '' }) }
@@ -106,7 +106,7 @@ function ChapterEditor({ bookId }) {
         <form onSubmit={save}>
           <div className="eyebrow">{editingId ? 'EDIT CHAPTER' : 'NEW CHAPTER'}</div>
           <div className="chapter-form-grid">
-            <label>Chapter number<input type="number" min="1" value={form.chapterNumber} onChange={set('chapterNumber')} readOnly title="Chapter numbers are assigned automatically in order" /></label>
+            <label>Chapter number<input type="number" min="1" value={form.chapterNumber} onChange={set('chapterNumber')} required title="You can reorder chapters by editing their numbers" /></label>
             <label>Chapter title<input value={form.chapterTitle} onChange={set('chapterTitle')} required maxLength="240" placeholder="Chapter One" /></label>
           </div>
           <label>Content<RichTextEditor key={editingId || 'new'} value={form.chapterContent} onChange={html => setForm(current => ({ ...current, chapterContent: html }))} /></label>
