@@ -13,7 +13,7 @@ public interface AuthService {
     void forgotPassword(ForgotPasswordRequest request);
     void resetPassword(ResetPasswordRequest request);
     void logout(LogoutRequest request, Long userId);
-    UserResponse updateProfile(Long userId, String name, String bio, MultipartFile image);
+    UserResponse updateProfile(Long userId, String name, String bio, String dateOfBirth, String instagram, String twitter, String youtube, MultipartFile image);
     UserResponse getProfile(Long userId);
     PublicUserResponse getPublicProfile(String identifier);
 }

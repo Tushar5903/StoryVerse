@@ -18,6 +18,7 @@ public final class ApiResponses {
     public record ImageUploadResponse(String imageUrl) {}
 
     public record UserResponse(Long id, String name, String username, String email, String bio, String profileImage,
+                               LocalDate dateOfBirth, String instagram, String twitter, String youtube,
                                Role role, boolean enabled, boolean emailVerified, boolean banned) {}
     public record AuthResponse(Long userId, String name, String username, String email, Role role, String accessToken, String refreshToken) {}
 
@@ -42,7 +43,7 @@ public final class ApiResponses {
 
     public record PublicUserResponse(
             Long id, String name, String username, String profileImage, String bio,
-            Long authorId, Instant joinedAt) {}
+            String instagram, String twitter, String youtube, Long authorId, Instant joinedAt) {}
 
     public record ProgressResponse(Long bookId, Long chapterId, Instant markedAt) {}
 
@@ -52,6 +53,4 @@ public final class ApiResponses {
 
     public record AdminDashboardResponse(long users, long books, long reviews) {}
     public record GenresResponse(java.util.List<String> genres) {}
-    public record ContactMessageResponse(
-            Long id, String name, String email, String subject, String message, Instant createdAt) {}
 }

@@ -1,11 +1,72 @@
-.sv-footer{max-width:1440px;margin:80px auto 0;padding:36px 48px 44px;border-top:1px solid var(--sv-line);color:var(--sv-muted)}
-.sv-footer-inner{display:flex;align-items:center;gap:40px}
-.sv-footer-brand{display:flex;align-items:center;gap:22px;margin-right:auto;min-width:0}
-.sv-footer-brand .brand{font:600 20px var(--sv-serif);letter-spacing:.06em;color:var(--sv-cream);white-space:nowrap}
-.sv-footer-brand .brand span{color:var(--sv-violet)}
-.sv-footer-brand p{margin:0;font:11px var(--sv-sans);color:var(--sv-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sv-footer-links{display:flex;gap:28px;margin:0}
-.sv-footer-links a{font:12px var(--sv-sans);color:var(--sv-muted);transition:color .2s ease}
-.sv-footer-links a:hover{color:var(--sv-cream)}
-.sv-footer-copy{font:10px var(--sv-mono);letter-spacing:.08em;white-space:nowrap}
-@media(max-width:800px){.sv-footer{margin:56px auto 0;padding:28px 20px 100px}.sv-footer-inner{display:block}.sv-footer-brand{flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:20px}.sv-footer-links{flex-wrap:wrap;gap:16px 24px;margin-bottom:18px}.sv-footer-copy{display:block}}
+.sv-footer {
+    max-width: 1440px;
+    margin: 80px auto 0;
+    padding: 42px 24px 46px;
+    border-top: 1px solid rgba(255, 255, 255, .07);
+    color: var(--sv-muted);
+    text-align: center;
+    background: linear-gradient(180deg, transparent, black)
+}
+
+.sv-footer-inner {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.sv-footer-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px
+}
+
+.sv-footer-brand .brand {
+    font: 600 20px var(--sv-serif);
+    letter-spacing: .08em;
+    color: var(--sv-cream);
+    white-space: nowrap
+}
+
+.sv-footer-brand .brand span {
+    color: var(--sv-violet)
+}
+
+.sv-footer-brand p {
+    margin: 0;
+    font: 11px var(--sv-sans);
+    letter-spacing: .04em;
+    color: var(--sv-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%
+}
+
+.sv-footer-copy {
+    font: 10px var(--sv-mono);
+    letter-spacing: .14em;
+    white-space: nowrap
+}
+
+@media(max-width:800px) {
+    .sv-footer {
+        margin: 56px auto 0;
+        padding: 34px 20px 40px
+    }
+
+    .sv-footer-brand .brand {
+        font-size: 18px
+    }
+
+    .sv-footer-brand p {
+        font-size: 10px
+    }
+
+    .sv-footer-copy {
+        font-size: 9px
+    }
+}

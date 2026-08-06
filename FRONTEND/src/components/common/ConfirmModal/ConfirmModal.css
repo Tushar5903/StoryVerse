@@ -1,4 +1,4 @@
-.confirm-overlay{position:fixed;inset:0;z-index:1000;background:rgba(8,7,11,.72);backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px;animation:confirm-fade .18s ease}
+.confirm-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px;animation:confirm-fade .18s ease}
 .confirm-modal{position:relative;width:100%;max-width:400px;background:var(--sv-panel);border:1px solid var(--sv-line);border-radius:20px;padding:34px 30px 28px;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:confirm-pop .22s cubic-bezier(.2,.9,.3,1.2)}
 .confirm-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;border:0;background:transparent;color:var(--sv-muted);cursor:pointer;transition:all .2s}
 .confirm-close:hover{color:#fff;background:rgba(255,255,255,.07)}

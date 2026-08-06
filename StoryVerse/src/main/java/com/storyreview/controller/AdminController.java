@@ -73,7 +73,9 @@ public class AdminController {
 
     private UserResponse toUserResponse(User user) {
         return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
-                user.getBio(), user.getProfileImage(), user.getRole(), user.isEnabled(), user.isEmailVerified(), user.isBanned());
+                user.getBio(), user.getProfileImage(), user.getDateOfBirth(),
+                user.getInstagram(), user.getTwitter(), user.getYoutube(),
+                user.getRole(), user.isEnabled(), user.isEmailVerified(), user.isBanned());
     }
 
     private AuthorResponse toAuthorResponse(Author author) {

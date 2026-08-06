@@ -11,6 +11,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Entity
@@ -33,6 +35,18 @@ public class User extends BaseEntity {
 
     @Column(name = "profile_image", length = 500)
     private String profileImage;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(length = 200)
+    private String instagram;
+
+    @Column(length = 200)
+    private String twitter;
+
+    @Column(length = 200)
+    private String youtube;
 
     @Column(nullable = false, length = 190)
     private String email;

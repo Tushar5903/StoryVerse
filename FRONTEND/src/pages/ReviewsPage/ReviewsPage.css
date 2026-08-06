@@ -98,6 +98,31 @@
   color: var(--sv-violet)
 }
 
+.review-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 14px 0 0
+}
+
+.review-socials a {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: var(--sv-muted);
+  background: #131318;
+  border: 1px solid var(--sv-line);
+  border-radius: 50%;
+  transition: color .25s ease, border-color .25s ease, background .25s ease
+}
+
+.review-socials a:hover {
+  color: var(--sv-cream);
+  border-color: var(--sv-violet);
+  background: #1c1826
+}
+
 .review-profile-card .button {
   width: 100%;
   justify-content: center;
@@ -717,7 +742,17 @@
   }
 
   .review-filter-tabs {
-    overflow-x: auto
+    overflow-x: auto;
+    scrollbar-width: none
+  }
+
+  .review-filter-tabs::-webkit-scrollbar {
+    display: none
+  }
+
+  .review-filter-tabs button {
+    padding: 7px 12px;
+    font-size: 12px
   }
 
   .review-actions {
@@ -727,5 +762,33 @@
   .review-search {
     width: 100%;
     flex: 1
+  }
+}
+
+@media(max-width:640px) {
+  .review-toolbar {
+    gap: 12px
+  }
+
+  .review-filter-tabs button {
+    padding: 7px 11px;
+    font-size: 11px
+  }
+
+  .review-icon-btn {
+    width: 42px;
+    height: 42px
+  }
+
+  .review-card {
+    padding: 14px
+  }
+
+  .review-title-row h3 {
+    font-size: 17px
+  }
+
+  .review-card-message {
+    font-size: 13px
   }
 }

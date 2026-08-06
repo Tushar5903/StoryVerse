@@ -4,9 +4,13 @@ import { toast } from 'react-toastify'
 import { FiArrowLeft, FiArrowRight } from 'react-icons/fi'
 import { getBook, listMyBooks, publishBook } from '../../services/booksApi'
 import { createChapter, deleteChapter, listChapters, updateChapter } from '../../services/chaptersApi'
+import RichTextEditor from '../../components/rich-editor/RichTextEditor'
+import ConfirmModal from '../../components/common/ConfirmModal/ConfirmModal'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
 import './ChaptersPage.css'
+
+const plainWords = html => String(html || '').replace(/<[^>]*>/g, ' ').trim().split(/\s+/).filter(Boolean).length
 
 export default function ChaptersPage() {
   const [params] = useSearchParams()
@@ -30,6 +34,8 @@ function ChapterEditor({ bookId }) {
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ chapterNumber: 1, chapterTitle: '', chapterContent: '' })
   const [error, setError] = useState('')
+  const [pendingDelete, setPendingDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = () => Promise.all([getBook(bookId), listChapters(bookId)])
     .then(([currentBook, currentChapters]) => { setBook(currentBook); setChapters(currentChapters) })
@@ -45,6 +51,10 @@ function ChapterEditor({ bookId }) {
   const save = async event => {
     event.preventDefault()
     setError('')
+    if (plainWords(form.chapterContent) === 0) {
+      setError('Chapter content is required.')
+      return
+    }
     try {
       if (editingId) await updateChapter(bookId, editingId, form)
       else await createChapter(bookId, form)
@@ -54,9 +64,11 @@ function ChapterEditor({ bookId }) {
     } catch (err) { setError(err.message); toast.error(err.message) }
   }
 
-  const remove = async chapter => {
-    if (!window.confirm(`Delete chapter ${chapter.chapterNumber} (“${chapter.chapterTitle || chapter.title}”)?`)) return
-    try { await deleteChapter(bookId, chapter.id); await load(); toast.success('Chapter deleted.') } catch (err) { setError(err.message); toast.error(err.message) }
+  const remove = chapter => setPendingDelete(chapter)
+  const confirmDelete = async () => {
+    setDeleting(true)
+    setError('')
+    try { await deleteChapter(bookId, pendingDelete.id); toast.success('Chapter deleted.'); await load() } catch (err) { setError(err.message); toast.error(err.message) } finally { setDeleting(false); setPendingDelete(null) }
   }
 
   const onPublish = async () => {
@@ -81,7 +93,7 @@ function ChapterEditor({ bookId }) {
           <span className="chapter-number">{String(chapter.chapterNumber).padStart(2, '0')}</span>
           <div className="chapter-row-main">
             <strong>{chapter.chapterTitle || chapter.title}</strong>
-            <small>{String(chapter.chapterContent || chapter.content || '').length} characters</small>
+            <small>{plainWords(chapter.chapterContent || chapter.content)} words</small>
           </div>
           <div className="chapter-row-actions">
             <button onClick={() => startEdit(chapter)}>Edit</button>
@@ -94,11 +106,11 @@ function ChapterEditor({ bookId }) {
         <form onSubmit={save}>
           <div className="eyebrow">{editingId ? 'EDIT CHAPTER' : 'NEW CHAPTER'}</div>
           <div className="chapter-form-grid">
-            <label>Chapter number<input type="number" min="1" value={form.chapterNumber} onChange={set('chapterNumber')} required /></label>
+            <label>Chapter number<input type="number" min="1" value={form.chapterNumber} onChange={set('chapterNumber')} readOnly title="Chapter numbers are assigned automatically in order" /></label>
             <label>Chapter title<input value={form.chapterTitle} onChange={set('chapterTitle')} required maxLength="240" placeholder="Chapter One" /></label>
           </div>
-          <label>Content<textarea rows="14" value={form.chapterContent} onChange={set('chapterContent')} required placeholder="Begin writing here…" /></label>
-          <p className="chapter-count">{form.chapterContent.trim() ? `${form.chapterContent.trim().split(/\s+/).length} words · ${Math.max(1, Math.ceil(form.chapterContent.trim().split(/\s+/).length / 200))} min read` : 'Start typing…'}</p>
+          <label>Content<RichTextEditor key={editingId || 'new'} value={form.chapterContent} onChange={html => setForm(current => ({ ...current, chapterContent: html }))} /></label>
+          <p className="chapter-count">{plainWords(form.chapterContent) ? `${plainWords(form.chapterContent)} words · ${Math.max(1, Math.ceil(plainWords(form.chapterContent) / 200))} min read` : 'Start typing…'}</p>
           <div className="chapter-form-actions">
             {editingId && <button type="button" className="ghost" onClick={startNew}>Cancel edit</button>}
             <button className="button" type="submit">{editingId ? 'Update chapter' : 'Add chapter'}</button>
@@ -111,5 +123,7 @@ function ChapterEditor({ bookId }) {
       <span>{book?.published ? 'This story is live in the archive.' : `${chapters.length} chapter${chapters.length === 1 ? '' : 's'} — publish when it is ready.`}</span>
       {!book?.published && <button className="button" onClick={onPublish}>Publish story</button>}
     </div>
+
+    {pendingDelete && <ConfirmModal title="Delete this chapter?" message={`Chapter ${pendingDelete.chapterNumber} (“${pendingDelete.chapterTitle || pendingDelete.title}”) will be permanently removed. This action cannot be undone.`} pending={deleting} onConfirm={confirmDelete} onCancel={() => setPendingDelete(null)} />}
   </main>
 }

@@ -1,0 +1,121 @@
+.bnv {
+    display: none
+}
+
+@media(max-width:800px) {
+    .bnv {
+        position: fixed;
+        z-index: 85;
+        left: 12px;
+        right: 12px;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        align-items: center;
+        gap: 2px;
+        height: 64px;
+        padding: 8px 10px;
+        background: rgba(0, 0, 0, .82);
+        backdrop-filter: blur(22px) saturate(160%);
+        -webkit-backdrop-filter: blur(22px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, .09);
+        border-radius: 22px;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, .55), 0 4px 14px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .05)
+    }
+
+    body.sv-shell {
+        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px))
+    }
+}
+
+.bnv-item {
+    position: relative;
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, .55);
+    text-decoration: none;
+    border-radius: 14px;
+    transition: color .25s ease
+}
+
+.bnv-item:focus-visible {
+    outline: 2px solid var(--sv-violet);
+    outline-offset: -3px
+}
+
+.bnv-item:hover {
+    color: rgba(255, 255, 255, .85)
+}
+
+.bnv-icon {
+    position: relative;
+    width: 46px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: inherit;
+    transition: box-shadow .25s ease
+}
+
+.bnv-pill {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: rgba(169, 139, 216, .16);
+    box-shadow: inset 0 0 0 1px rgba(169, 139, 216, .35)
+}
+
+.bnv-glyph {
+    display: grid;
+    place-items: center
+}
+
+.bnv-item small {
+    font: 500 12px var(--sv-sans);
+    letter-spacing: .01em;
+    line-height: 1;
+    white-space: nowrap;
+    transition: color .25s ease, font-weight .25s ease
+}
+
+.bnv-item.active {
+    color: var(--sv-cream)
+}
+
+.bnv-item.active .bnv-icon {
+    color: var(--sv-violet)
+}
+
+.bnv-item.active small {
+    color: var(--sv-violet);
+    font-weight: 600
+}
+
+.bnv-item.emphasized .bnv-icon {
+    background: linear-gradient(135deg, #b894e4, #8a67bd);
+    color: #15121b;
+    box-shadow: 0 6px 16px rgba(169, 139, 216, .35);
+    transform: translateY(-4px)
+}
+
+.bnv-item.emphasized small {
+    color: rgba(255, 255, 255, .85)
+}
+
+.bnv-item.emphasized:hover .bnv-icon {
+    box-shadow: 0 8px 22px rgba(169, 139, 216, .5)
+}
+
+.bnv-item.emphasized.active .bnv-icon {
+    box-shadow: 0 0 0 2px rgba(169, 139, 216, .4), 0 8px 22px rgba(169, 139, 216, .55)
+}
+
+.bnv-item.emphasized.active small {
+    color: var(--sv-violet)
+}

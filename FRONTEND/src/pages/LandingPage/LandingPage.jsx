@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { FreeMode } from 'swiper/modules'
+import { FreeMode, Navigation } from 'swiper/modules'
 import { motion } from 'framer-motion'
 import { useSelector } from 'react-redux'
-import { FiArrowRight, FiArrowUpRight } from 'react-icons/fi'
+import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi'
 import { listBooks } from '../../services/booksApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
@@ -101,9 +101,15 @@ export default function LandingPage() {
               <div className="lp-eyebrow">Fresh on the shelf</div>
               <h2>Trending manuscripts</h2>
             </div>
-            <Link className="shelf-link" to="/explore">See the whole shelf <FiArrowRight /></Link>
+            <div className="shelf-tools">
+              <div className="lp-shelf-nav">
+                <button className="lp-swiper-prev" type="button" aria-label="Previous manuscripts" title="Previous"><FiArrowLeft /></button>
+                <button className="lp-swiper-next" type="button" aria-label="Next manuscripts" title="Next"><FiArrowRight /></button>
+              </div>
+              <Link className="shelf-link" to="/explore">See the whole shelf <FiArrowRight /></Link>
+            </div>
           </div>
-          <Swiper modules={[FreeMode]} freeMode spaceBetween={16} slidesPerView="auto">
+          <Swiper modules={[FreeMode, Navigation]} freeMode spaceBetween={16} slidesPerView="auto" navigation={{ prevEl: '.lp-swiper-prev', nextEl: '.lp-swiper-next' }}>
             {books.map(book => (
               <SwiperSlide className="lp-slide" key={book.id}>
                 <Link to={`/books/${book.id}`}>

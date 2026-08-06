@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import { FiBookOpen, FiLogOut, FiSettings, FiShield } from 'react-icons/fi'
+import { FiBookmark, FiBookOpen, FiLogOut, FiSettings, FiShield } from 'react-icons/fi'
 import { getMe } from '../../../services/usersApi'
 import { logout } from '../../../services/authApi'
 import { clearSession, setUser } from '../../../store/authSlice'
@@ -38,6 +38,7 @@ export default function UserMenu(){
     {open && <div className="user-dropdown">
       <strong>{user.name || user.username}</strong>
       {user.role === 'ADMIN' && <Link to="/admin" onClick={() => setOpen(false)}><FiShield /> Admin panel</Link>}
+      {user.role !== 'ADMIN' && <Link to="/reader-dashboard" onClick={() => setOpen(false)}><FiBookmark /> My Library</Link>}
       <Link to="/reviews" onClick={() => setOpen(false)}><FiBookOpen /> My Reviews</Link>
       <Link to="/settings" onClick={() => setOpen(false)}><FiSettings /> Settings</Link>
       <button className="logout-action" onClick={signOut}><FiLogOut /> Logout</button>

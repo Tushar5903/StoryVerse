@@ -1,0 +1,5 @@
+ALTER TABLE users
+    ADD COLUMN date_of_birth DATE NULL,
+    ADD COLUMN instagram VARCHAR(200) NULL,
+    ADD COLUMN twitter VARCHAR(200) NULL,
+    ADD COLUMN youtube VARCHAR(200) NULL;

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { FiArrowUpRight } from 'react-icons/fi'
 import { deleteBook, listMyBooks, publishBook } from '../../services/booksApi'
 import { getMe } from '../../services/usersApi'
+import ConfirmModal from '../../components/common/ConfirmModal/ConfirmModal'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
 import './WriterDashboardPage.css'
@@ -13,6 +14,8 @@ export default function WriterDashboardPage() {
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [pendingDelete, setPendingDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = () => {
     Promise.all([getMe(), listMyBooks('?size=50')])
@@ -25,9 +28,11 @@ export default function WriterDashboardPage() {
   const onPublish = async id => {
     try { await publishBook(id); toast.success('Story published. It is now live in the archive.'); load() } catch (err) { setError(err.message); toast.error(err.message) }
   }
-  const onDelete = async id => {
-    if (!window.confirm('Delete this story and all its chapters? This cannot be undone.')) return
-    try { await deleteBook(id); toast.success('Story deleted.'); load() } catch (err) { setError(err.message); toast.error(err.message) }
+  const onDelete = book => setPendingDelete(book)
+  const confirmDelete = async () => {
+    setDeleting(true)
+    setError('')
+    try { await deleteBook(pendingDelete.id); toast.success('Story deleted.'); await load() } catch (err) { setError(err.message); toast.error(err.message) } finally { setDeleting(false); setPendingDelete(null) }
   }
 
   const published = books.filter(book => book.published).length
@@ -67,7 +72,7 @@ export default function WriterDashboardPage() {
                     <Link to={`/books/${book.id}/edit`}>Edit details</Link>
                     <Link to={`/write?bookId=${book.id}`}>Chapters</Link>
                     {!book.published && <button onClick={() => onPublish(book.id)}>Publish</button>}
-                    <button className="danger" onClick={() => onDelete(book.id)}>Delete</button>
+                    <button className="danger" onClick={() => onDelete(book)}>Delete</button>
                   </div>
                 </div>
                 <span className={`writer-status ${book.published ? 'published' : 'draft'}`}>{book.published ? 'Published' : 'Draft'}</span>
@@ -76,6 +81,7 @@ export default function WriterDashboardPage() {
       </section>
       <p className="writer-account">Publishing as <strong>@{user?.username || 'writer'}</strong> — your author profile updates automatically.</p>
     </main>
+    {pendingDelete && <ConfirmModal title="Delete this story?" message={`“${pendingDelete.title}” and all its chapters will be permanently deleted. This action cannot be undone.`} pending={deleting} onConfirm={confirmDelete} onCancel={() => setPendingDelete(null)} />}
     <Footer />
   </>
 }

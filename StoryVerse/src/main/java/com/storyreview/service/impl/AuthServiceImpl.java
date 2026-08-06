@@ -22,9 +22,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -123,7 +125,7 @@ public class AuthServiceImpl implements AuthService {
         token.setRevoked(true);
     }
 
-    public UserResponse updateProfile(Long userId, String name, String bio, org.springframework.web.multipart.MultipartFile image) {
+    public UserResponse updateProfile(Long userId, String name, String bio, String dateOfBirth, String instagram, String twitter, String youtube, MultipartFile image) {
         User user = users.findById(userId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         if (name != null && !name.isBlank()) {
             user.setName(name.trim());
@@ -131,10 +133,20 @@ public class AuthServiceImpl implements AuthService {
         if (bio != null) {
             user.setBio(bio.trim());
         }
+        if (dateOfBirth != null) {
+            user.setDateOfBirth(dateOfBirth.isBlank() ? null : LocalDate.parse(dateOfBirth));
+        }
+        user.setInstagram(blankToNull(instagram));
+        user.setTwitter(blankToNull(twitter));
+        user.setYoutube(blankToNull(youtube));
         if (image != null && !image.isEmpty()) {
             user.setProfileImage(cloudinaryService.uploadProfileImage(image));
         }
         return toUserResponse(user);
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     @Transactional(readOnly = true)
@@ -160,7 +172,8 @@ public class AuthServiceImpl implements AuthService {
     private PublicUserResponse toPublicProfile(User user) {
         Long authorId = authors.findByUserId(user.getId()).map(author -> author.getId()).orElse(null);
         return new PublicUserResponse(user.getId(), user.getName(), user.getUsername(),
-                user.getProfileImage(), user.getBio(), authorId, user.getCreatedAt());
+                user.getProfileImage(), user.getBio(), user.getInstagram(), user.getTwitter(), user.getYoutube(),
+                authorId, user.getCreatedAt());
     }
 
     private String issueRefresh(User user) {
@@ -177,8 +190,9 @@ public class AuthServiceImpl implements AuthService {
 
     private UserResponse toUserResponse(User user) {
         return new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getEmail(),
-                user.getBio(), user.getProfileImage(), user.getRole(), user.isEnabled(),
-                user.isEmailVerified(), user.isBanned());
+                user.getBio(), user.getProfileImage(), user.getDateOfBirth(),
+                user.getInstagram(), user.getTwitter(), user.getYoutube(),
+                user.getRole(), user.isEnabled(), user.isEmailVerified(), user.isBanned());
     }
 
     private String secureToken() {

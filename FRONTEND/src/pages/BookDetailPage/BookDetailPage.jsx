@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import { FiArrowLeft } from 'react-icons/fi'
+import { FiArrowLeft, FiEdit3 } from 'react-icons/fi'
 import { getBook } from '../../services/booksApi'
 import { listChapters } from '../../services/chaptersApi'
-import { createReview, listReviews } from '../../services/reviewsApi'
+import { createReview, listReviews, updateReview } from '../../services/reviewsApi'
 import UserHandle from '../../components/common/UserHandle/UserHandle'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import MoctaleMeter from '../../components/review-meter/MoctaleMeter'
@@ -74,8 +74,40 @@ export function Meter({ reviews, compact = false }) {
     </div>
   )
 }
-function ReviewComposer({ bookId, onPosted }) { const user = useSelector(state => state.auth.user); const [verdict, setVerdict] = useState('TIMEPASS'); const [message, setMessage] = useState(''); const [status, setStatus] = useState(''); const submit = async event => { event.preventDefault(); if (!user) { setStatus('Log in to write a review.'); return } try { await createReview({ bookId: Number(bookId), verdict, message }); setMessage(''); setStatus(''); toast.success('Review posted. Thank you for your verdict!'); onPosted() } catch (error) { setStatus(error.message); toast.error(error.message) } }; return <section className="review-composer"><h2>Write a Review</h2>{!user && <p className="login-review-note"><Link to="/login">Log in</Link> to share your verdict.</p>}<form onSubmit={submit}><div className="review-composer-top"><div className="review-user-avatar">{(user?.name || 'U').slice(0, 1)}</div><strong>@{user?.username || 'guest_reader'}</strong><div className="verdict-picker">{verdicts.map(([key, label]) => <button type="button" className={verdict === key ? `selected ${key.toLowerCase()}` : ''} onClick={() => setVerdict(key)} key={key}>{label}</button>)}</div></div><textarea maxLength="1000" value={message} onChange={event => setMessage(event.target.value)} placeholder="Write your review here…" /><div className="review-composer-bottom"><small>{message.length}/1000</small><button className="button" disabled={!user}>Post</button></div>{status && <p className="review-status">{status}</p>}</form></section> }
+function ReviewComposer({ bookId, review, onPosted }) {
+  const user = useSelector(state => state.auth.user)
+  const editing = Boolean(review)
+  const [verdict, setVerdict] = useState(review?.verdict || 'TIMEPASS')
+  const [message, setMessage] = useState(review?.message || '')
+  const [status, setStatus] = useState('')
+  const submit = async event => {
+    event.preventDefault()
+    if (!user) { setStatus('Log in to write a review.'); return }
+    try {
+      if (editing) {
+        await updateReview(review.id, { verdict, message })
+        toast.success('Review updated.')
+      } else {
+        await createReview({ bookId: Number(bookId), verdict, message })
+        setMessage('')
+        setVerdict('TIMEPASS')
+        toast.success('Review posted. Thank you for your verdict!')
+      }
+      setStatus('')
+      onPosted()
+    } catch (error) { setStatus(error.message); toast.error(error.message) }
+  }
+  return <section className="review-composer"><h2>{editing ? 'Edit Review' : 'Write a Review'}</h2>{!user && <p className="login-review-note"><Link to="/login">Log in</Link> to share your verdict.</p>}<form onSubmit={submit}><div className="review-composer-top"><div className="review-user-avatar">{(user?.name || 'U').slice(0, 1)}</div><strong>@{user?.username || 'guest_reader'}</strong><div className="verdict-picker">{verdicts.map(([key, label]) => <button type="button" className={verdict === key ? `selected ${key.toLowerCase()}` : ''} onClick={() => setVerdict(key)} key={key}>{label}</button>)}</div></div><textarea maxLength="1000" value={message} onChange={event => setMessage(event.target.value)} placeholder="Write your review here…" /><div className="review-composer-bottom"><small>{message.length}/1000</small><button className="button" disabled={!user}>{editing ? 'Save changes' : 'Post'}</button></div>{status && <p className="review-status">{status}</p>}</form></section>
+}
 export default function BookDetailPage({ bookId }) {
-  const [book, setBook] = useState(null); const [chapters, setChapters] = useState([]); const [reviews, setReviews] = useState([]); const [error, setError] = useState(''); const loadReviews = () => listReviews(bookId).then(page => setReviews(page?.content || [])).catch(() => setReviews([])); useEffect(() => { Promise.all([getBook(bookId), listChapters(bookId)]).then(([currentBook, currentChapters]) => { setBook(currentBook); setChapters(currentBook.bookType === 'REVIEW_BOOK' ? [] : currentChapters); loadReviews() }).catch(error => setError(error.message)) }, [bookId]) // eslint-disable-line react-hooks/exhaustive-deps
-  const sortedReviews = useMemo(() => [...reviews].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), [reviews]); const showChapters = book && book.bookType !== 'REVIEW_BOOK'; return <><SharedNav /><main className="detail-page"><Link to="/explore" className="detail-back"><FiArrowLeft /> Back to explore</Link>{error ? <div className="error-box">{error}</div> : book ? <><div className="detail-layout"><div className="detail-cover">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</div><div><div className="eyebrow">{book.genre || 'MANUSCRIPT'} · {book.language || 'EN'}</div><h1>{book.title}</h1>{book.authorId ? <Link className="detail-author" to={`/authors/${book.authorId}`}>By {book.authorName || 'Unknown author'}</Link> : <p className="detail-author">By {book.authorName || 'Unknown author'}</p>}<p>{book.description || 'No description has been added yet.'}</p>{showChapters && <div className="chapter-list"><h2>Chapters</h2>{chapters.length ? chapters.map(chapter => <Link to={`/reader?bookId=${book.id}`} key={chapter.id}>Chapter {chapter.chapterNumber}: {chapter.chapterTitle}</Link>) : <span>No chapters published yet.</span>}</div>}</div></div><MoctaleMeter reviews={reviews} /><ReviewComposer bookId={bookId} onPosted={loadReviews} /><section className="detail-reviews"><h2>Reviews</h2>{sortedReviews.length ? sortedReviews.map(review => <article key={review.id}><div className="review-line"><UserHandle userId={review.userId} user={review} size={32} /><span className={`review-verdict ${String(review.verdict).toLowerCase().replace(/_/g, '')}`}>{String(review.verdict).replace(/_/g, ' ')}</span></div><p>{review.message || 'No written note.'}</p></article>) : <div className="detail-empty">No reviews yet. Be the first to leave a verdict.</div>}</section></> : <div>Loading manuscript…</div>}</main></>
+  const user = useSelector(state => state.auth.user)
+  const [book, setBook] = useState(null); const [chapters, setChapters] = useState([]); const [reviews, setReviews] = useState([]); const [error, setError] = useState(''); const [editing, setEditing] = useState(false)
+  const loadReviews = () => listReviews(bookId).then(page => setReviews(page?.content || [])).catch(() => setReviews([]))
+  useEffect(() => { Promise.all([getBook(bookId), listChapters(bookId)]).then(([currentBook, currentChapters]) => { setBook(currentBook); setChapters(currentBook.bookType === 'REVIEW_BOOK' ? [] : currentChapters); loadReviews() }).catch(error => setError(error.message)) }, [bookId]) // eslint-disable-line react-hooks/exhaustive-deps
+  const sortedReviews = useMemo(() => [...reviews].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), [reviews])
+  const myReview = useMemo(() => user ? sortedReviews.find(review => review.userId === user.id) : null, [sortedReviews, user])
+  const isOwner = Boolean(user && book && book.createdById === user.id)
+  const showChapters = book && book.bookType !== 'REVIEW_BOOK'
+  const reviewZone = isOwner ? null : myReview ? (editing ? <ReviewComposer bookId={bookId} review={myReview} onPosted={() => { setEditing(false); loadReviews() }} /> : <section className="review-composer my-review"><h2>Your Review</h2><div className="review-line"><UserHandle userId={myReview.userId} user={myReview} size={32} /><span className={`review-verdict ${String(myReview.verdict).toLowerCase().replace(/_/g, '')}`}>{String(myReview.verdict).replace(/_/g, ' ')}</span><button type="button" className="review-edit-btn" onClick={() => setEditing(true)}><FiEdit3 size={13} /> Edit</button></div><p className="my-review-text">{myReview.message || 'No written note.'}</p></section>) : <ReviewComposer bookId={bookId} onPosted={loadReviews} />
+  return <><SharedNav /><main className="detail-page"><Link to="/explore" className="detail-back"><FiArrowLeft /> Back to explore</Link>{error ? <div className="error-box">{error}</div> : book ? <><div className="detail-layout"><div className="detail-cover">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</div><div><div className="eyebrow">{book.genre || 'MANUSCRIPT'} · {book.language || 'EN'}</div><h1>{book.title}</h1>{book.authorId ? <Link className="detail-author" to={`/authors/${book.authorId}`}>By {book.authorName || 'Unknown author'}</Link> : <p className="detail-author">By {book.authorName || 'Unknown author'}</p>}<p>{book.description || 'No description has been added yet.'}</p>{showChapters && <div className="chapter-list"><h2>Chapters</h2>{chapters.length ? chapters.map(chapter => <Link to={`/reader?bookId=${book.id}`} key={chapter.id}>Chapter {chapter.chapterNumber}: {chapter.chapterTitle}</Link>) : <span>No chapters published yet.</span>}</div>}</div></div><MoctaleMeter reviews={reviews} />{reviewZone}<section className="detail-reviews"><h2>Reviews</h2>{sortedReviews.length ? sortedReviews.map(review => <article key={review.id}><div className="review-line"><UserHandle userId={review.userId} user={review} size={32} /><span className={`review-verdict ${String(review.verdict).toLowerCase().replace(/_/g, '')}`}>{String(review.verdict).replace(/_/g, ' ')}</span></div><p>{review.message || 'No written note.'}</p></article>) : <div className="detail-empty">No reviews yet. Be the first to leave a verdict.</div>}</section></> : <div>Loading manuscript…</div>}</main></>
 }

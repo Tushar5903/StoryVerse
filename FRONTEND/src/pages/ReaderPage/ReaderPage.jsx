@@ -6,6 +6,11 @@ import { listChapters } from '../../services/chaptersApi'
 import { getBookProgress, markRead, unmarkRead } from '../../services/progressApi'
 import './ReaderPage.css'
 
+const looksLikeHtml = value => /<\/?[a-z][\s\S]*>/i.test(String(value || '').trim())
+const renderContent = value => looksLikeHtml(value)
+  ? <div className="prose" dangerouslySetInnerHTML={{ __html: value }} />
+  : <div className="prose">{String(value).split('\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
+
 export default function ReaderPage() {
   const [params] = useSearchParams()
   const bookId = params.get('bookId')
@@ -76,7 +81,7 @@ export default function ReaderPage() {
       <article className="reading-column">
         <div className="eyebrow">{book?.genre || 'MANUSCRIPT'} · PART ONE</div>
         <h1>{chapter.chapterTitle || chapter.title}</h1>
-        {chapter.chapterContent || chapter.content ? <div className="prose">{String(chapter.chapterContent || chapter.content).split('\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : <p className="dropcap">This chapter is still being written.</p>}
+        {chapter.chapterContent || chapter.content ? renderContent(chapter.chapterContent || chapter.content) : <p className="dropcap">This chapter is still being written.</p>}
         <div className="reader-nav">
           <button onClick={() => go(active - 1)} disabled={active === 0}><FiArrowLeft /> Previous</button>
           <span>{active + 1} / {chapters.length}</span>

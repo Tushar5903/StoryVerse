@@ -235,6 +235,42 @@
     transition: color .2s
 }
 
+.shelf-tools {
+    display: flex;
+    align-items: center;
+    gap: 20px
+}
+
+.lp-shelf-nav {
+    display: flex;
+    gap: 10px
+}
+
+.lp-shelf-nav button {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, .14);
+    color: var(--sv-muted);
+    cursor: pointer;
+    transition: color .25s ease, border-color .25s ease, background .25s ease
+}
+
+.lp-shelf-nav button:hover {
+    color: var(--sv-violet);
+    border-color: var(--sv-violet)
+}
+
+.lp-shelf-nav button.swiper-button-disabled {
+    opacity: .35;
+    cursor: default;
+    pointer-events: none
+}
+
 .shelf-link svg {
     color: var(--sv-violet)
 }
@@ -295,7 +331,7 @@
     display: grid;
     justify-items: start;
     gap: 8px;
-    background: linear-gradient(120deg, rgba(23, 17, 29, .5), rgba(13, 12, 16, .6))
+    background: linear-gradient(120deg, rgba(10, 8, 14, .5), rgba(0, 0, 0, .6))
 }
 
 .lp-closing h2 {
@@ -343,5 +379,31 @@
 
     .lp-closing {
         padding: 40px 24px
+    }
+
+    .lp-shelf-nav {
+        display: none
+    }
+
+    .lp-slide {
+        width: 140px !important
+    }
+
+    .lp-cover {
+        width: 140px;
+        height: 190px;
+        font-size: 32px
+    }
+
+    .lp-slide h3 {
+        font-size: 15px
+    }
+
+    .shelf-head h2 {
+        font-size: 26px
+    }
+
+    .meter-card {
+        padding: 20px 16px 16px
     }
 }

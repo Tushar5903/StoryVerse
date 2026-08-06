@@ -1,4 +1,4 @@
-.discover-page{max-width:1440px;margin:0 auto;padding:32px 48px 96px;color:var(--sv-cream);background:#09090b;overflow-x:hidden}
+.discover-page{max-width:1440px;margin:0 auto;padding:32px 48px 96px;color:var(--sv-cream);background:#000000;overflow-x:hidden}
 .discover-head h1{font:600 clamp(34px,5vw,52px)/1.05 var(--sv-sans);letter-spacing:-.03em;margin:12px 0 0}
 .discover-genre-chip{display:inline-flex;align-items:center;gap:9px;margin-top:20px;padding:8px 15px;border:1px solid var(--sv-violet);border-radius:999px;color:var(--sv-violet);font:500 13px var(--sv-sans);transition:background .2s ease,color .2s ease}
 .discover-genre-chip:hover{background:rgba(169,139,216,.12);color:#fff}
@@ -13,14 +13,15 @@
 .discover-row::-webkit-scrollbar{display:none}
 .discover-row.dragging{cursor:grabbing;scroll-snap-type:none;user-select:none;-webkit-user-select:none}
 .discover-motion{flex:0 0 auto;width:200px;height:400px;scroll-snap-align:start}
-.discover-card{display:flex;flex-direction:column;width:100%;height:100%;border-radius:16px;overflow:hidden;background:#131318;border:1px solid rgba(255,255,255,.07);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
-.discover-card:hover{transform:translateY(-6px);box-shadow:0 24px 48px rgba(0,0,0,.55),0 0 0 1px rgba(169,139,216,.25);border-color:rgba(169,139,216,.35)}
+.discover-card{display:flex;flex-direction:column;width:100%;height:100%;border-radius:16px;overflow:hidden;background:#121116;border:1px solid rgba(255,255,255,.07);transition:box-shadow 1s ease,border-color 1s ease}
+.discover-card:hover{box-shadow:0 30px 70px rgba(0,0,0,.65),0 0 0 1px rgba(169,139,216,.28);border-color:rgba(169,139,216,.35)}
 .discover-card:focus-visible{outline:2px solid var(--sv-violet);outline-offset:3px}
-.discover-poster{height:78%;overflow:hidden;background:linear-gradient(160deg,#1b1822,#0f0e13)}
+.discover-poster{height:78%;overflow:hidden;background:linear-gradient(160deg,#131019,#07070a)}
 .discover-poster img{width:100%;height:100%;object-fit:cover;transition:transform .3s ease}
 .discover-card:hover .discover-poster img{transform:scale(1.07)}
 .discover-fallback{width:100%;height:100%;display:grid;place-items:center;font:600 22px var(--sv-serif);color:var(--sv-violet)}
-.discover-info{height:22%;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:12px 14px}
+.discover-info{height:22%;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:12px 14px;background:#000000;transition:background 1s ease}
+.discover-card:hover .discover-info{background:#161420}
 .discover-card-title{margin:0;font:500 14px/1.35 var(--sv-sans);color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .discover-meta{margin:0;font:11px var(--sv-mono);letter-spacing:.04em;color:var(--sv-muted)}
 .discover-empty{padding:28px 0;color:var(--sv-muted);font-size:14px}
@@ -29,4 +30,4 @@
 .discover-grid{display:flex;flex-wrap:wrap;gap:24px}
 @media(max-width:1100px){.discover-page{padding:32px 32px 88px}}
 @media(max-width:800px){.discover-page{padding:32px 20px 72px}.discover-heading h2{font-size:30px}.discover-heading p{font-size:15px}}
-@media(max-width:600px){.discover-motion{width:44vw!important}}
+@media(max-width:600px){.discover-page{padding:28px 14px 72px}.discover-motion{width:44vw!important}.discover-card-title{font-size:13px}.discover-meta{font-size:10px}.discover-heading h2{font-size:26px}.discover-row{gap:16px}}

@@ -40,8 +40,12 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     UserResponse updateProfile(@RequestParam(required = false) String name,
                                @RequestParam(required = false) String bio,
+                               @RequestParam(required = false) String dateOfBirth,
+                               @RequestParam(required = false) String instagram,
+                               @RequestParam(required = false) String twitter,
+                               @RequestParam(required = false) String youtube,
                                @RequestPart(required = false) MultipartFile image,
                                @AuthenticationPrincipal CurrentUser user) {
-        return authService.updateProfile(user.id(), name, bio, image);
+        return authService.updateProfile(user.id(), name, bio, dateOfBirth, instagram, twitter, youtube, image);
     }
 }

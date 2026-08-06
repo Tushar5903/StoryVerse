@@ -7,7 +7,7 @@ import './SearchBox.css'
 const TYPE_LABEL = { REVIEW_BOOK: 'For Review', USER_BOOK: 'User Book' }
 const yearOf = book => book.publicationDate ? String(book.publicationDate).slice(0, 4) : '—'
 
-export default function SearchBox({ className = '' }) {
+export default function SearchBox({ className = '', autoFocus = false, onNavigate = null }) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -41,25 +41,26 @@ export default function SearchBox({ className = '' }) {
     if (!term) return
     setOpen(false)
     document.activeElement?.blur()
+    onNavigate?.()
     navigate(`/search?q=${encodeURIComponent(term)}`)
   }
-  const onKeyDown = event => { if (event.key === 'Escape') { setOpen(false); event.currentTarget.blur() } }
+  const onKeyDown = event => { if (event.key === 'Escape') { setOpen(false); event.currentTarget.blur(); onNavigate?.() } }
   const term = query.trim()
   return (
     <form className={className} role="search" ref={boxRef} onSubmit={submit}>
       <FiSearch />
-      <input value={query} onChange={onChange} onKeyDown={onKeyDown} placeholder="Search books…" aria-label="Search books" autoComplete="off" />
+      <input value={query} onChange={onChange} onKeyDown={onKeyDown} placeholder="Search books…" aria-label="Search books" autoComplete="off" autoFocus={autoFocus} />
       {open && (
         <div className="sb-dropdown">
           {loading ? <div className="sb-empty">Searching…</div>
             : results.length ? <>
                 {results.map(book => (
-                  <Link key={book.id} className="sb-result" to={`/books/${book.id}`} onClick={() => setOpen(false)}>
+                  <Link key={book.id} className="sb-result" to={`/books/${book.id}`} onClick={() => { setOpen(false); onNavigate?.() }}>
                     <span className="sb-thumb">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</span>
                     <span className="sb-copy"><strong>{book.title}</strong><small>{TYPE_LABEL[book.bookType] || book.bookType || 'Story'} · {yearOf(book)}</small></span>
                   </Link>
                 ))}
-                <Link className="sb-seeall" to={`/search?q=${encodeURIComponent(term)}`} onClick={() => setOpen(false)}>See all results for “{term}” <FiArrowRight /></Link>
+                <Link className="sb-seeall" to={`/search?q=${encodeURIComponent(term)}`} onClick={() => { setOpen(false); onNavigate?.() }}>See all results for “{term}” <FiArrowRight /></Link>
               </>
             : <div className="sb-empty">No books match “{term}”.</div>}
         </div>
