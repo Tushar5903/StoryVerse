@@ -3,7 +3,6 @@ package com.storyreview.controller;
 import com.storyreview.dto.request.AuthRequests.*;
 import com.storyreview.dto.response.ApiResponses.AuthResponse;
 import com.storyreview.dto.response.ApiResponses.MessageResponse;
-import com.storyreview.dto.response.ApiResponses.UserResponse;
 import com.storyreview.security.CurrentUser;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,8 +21,10 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/register")
-    UserResponse register(@Valid @RequestBody RegisterRequest request) { return authService.register(request); }
+    @PostMapping("/register/send-otp")
+    MessageResponse sendRegistrationOtp(@Valid @RequestBody RegisterRequest request) { return authService.sendRegistrationOtp(request); }
+    @PostMapping("/register/verify")
+    AuthResponse verifyRegistration(@Valid @RequestBody VerifyRegistrationRequest request) { return authService.verifyRegistration(request); }
     @PostMapping("/login")
     AuthResponse login(@Valid @RequestBody LoginRequest request) { return authService.login(request); }
     @PostMapping("/refresh")

@@ -2,13 +2,17 @@ package com.storyreview.service.impl;
 
 import com.storyreview.dto.request.AuthRequests.*;
 import com.storyreview.dto.response.ApiResponses.AuthResponse;
+import com.storyreview.dto.response.ApiResponses.MessageResponse;
 import com.storyreview.dto.response.ApiResponses.PublicUserResponse;
 import com.storyreview.dto.response.ApiResponses.UserResponse;
+import com.storyreview.entity.OtpCode;
 import com.storyreview.entity.PasswordResetToken;
 import com.storyreview.entity.RefreshToken;
 import com.storyreview.entity.User;
+import com.storyreview.enums.Role;
 import com.storyreview.exception.ApiException;
 import com.storyreview.repository.AuthorRepository;
+import com.storyreview.repository.OtpCodeRepository;
 import com.storyreview.repository.PasswordResetTokenRepository;
 import com.storyreview.repository.RefreshTokenRepository;
 import com.storyreview.repository.UserRepository;
@@ -18,6 +22,7 @@ import com.storyreview.service.EmailService;
 import com.storyreview.service.CloudinaryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,40 +44,76 @@ public class AuthServiceImpl implements AuthService {
     private final AuthorRepository authors;
     private final RefreshTokenRepository refreshTokens;
     private final PasswordResetTokenRepository resetTokens;
+    private final OtpCodeRepository otpCodes;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
     private final CloudinaryService cloudinaryService;
+    private final long otpTtlSeconds;
 
-    public AuthServiceImpl(UserRepository users, AuthorRepository authors, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService) {
+    public AuthServiceImpl(UserRepository users, AuthorRepository authors, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, OtpCodeRepository otpCodes, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService, @Value("${app.security.otp.ttl-seconds:300}") long otpTtlSeconds) {
         this.users = users;
         this.authors = authors;
         this.refreshTokens = refreshTokens;
         this.resetTokens = resetTokens;
+        this.otpCodes = otpCodes;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.emailService = emailService;
         this.cloudinaryService = cloudinaryService;
+        this.otpTtlSeconds = otpTtlSeconds;
     }
 
-    public UserResponse register(RegisterRequest request) {
-        if (users.existsByEmailIgnoreCase(request.email())) {
-            throw new ApiException(HttpStatus.CONFLICT, "Email is already registered");
+    public MessageResponse sendRegistrationOtp(RegisterRequest request) {
+        assertEmailAndUsernameAvailable(request.email(), request.username());
+        String code = String.format("%06d", RANDOM.nextInt(1_000_000));
+        otpCodes.invalidateUnusedForEmail(request.email().toLowerCase());
+        OtpCode otp = new OtpCode();
+        otp.setEmail(request.email().toLowerCase());
+        otp.setCode(code);
+        otp.setExpiresAt(Instant.now().plusSeconds(otpTtlSeconds));
+        otpCodes.save(otp);
+        try {
+            emailService.sendOtpEmail(otp.getEmail(), code);
+        } catch (Exception ex) {
+            log.warn("Failed to send verification code to {}: {}", otp.getEmail(), ex.getMessage());
         }
-        if (users.existsByUsernameIgnoreCase(request.username())) {
-            throw new ApiException(HttpStatus.CONFLICT, "Username is already taken");
+        return new MessageResponse("Verification code sent to your email");
+    }
+
+    public AuthResponse verifyRegistration(VerifyRegistrationRequest request) {
+        assertEmailAndUsernameAvailable(request.email(), request.username());
+        OtpCode otp = otpCodes.findFirstByEmailIgnoreCaseAndCodeOrderByCreatedAtDesc(request.email(), request.otp())
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Invalid verification code"));
+        if (otp.isUsed()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Verification code already used");
+        }
+        if (otp.getExpiresAt().isBefore(Instant.now())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Verification code has expired. Request a new one");
+        }
+        if (otpCodes.markUsed(otp.getId()) == 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Verification code already used");
         }
         User user = new User();
         user.setName(request.name());
         user.setUsername(request.username().toLowerCase());
         user.setEmail(request.email().toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setRole(request.role());
+        user.setRole(Role.USER);
         user.setEnabled(true);
         user.setEmailVerified(true);
         user = users.save(user);
-        log.info("Registered user {}", user.getEmail());
-        return toUserResponse(user);
+        log.info("Registered user {} after OTP verification", user.getEmail());
+        return authResponse(user, issueRefresh(user));
+    }
+
+    private void assertEmailAndUsernameAvailable(String email, String username) {
+        if (users.existsByEmailIgnoreCase(email)) {
+            throw new ApiException(HttpStatus.CONFLICT, "Email is already registered");
+        }
+        if (users.existsByUsernameIgnoreCase(username)) {
+            throw new ApiException(HttpStatus.CONFLICT, "Username is already taken");
+        }
     }
 
     @Transactional

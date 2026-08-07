@@ -788,6 +788,50 @@ details p {
     padding: 0 13px;
 }
 
+.otp-note {
+    color: var(--muted);
+    font-size: 13px;
+    margin: -14px 0 22px;
+    line-height: 1.6;
+}
+
+.otp-note strong {
+    color: var(--violet);
+}
+
+.otp-field input {
+    font-size: 28px;
+    letter-spacing: .6em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.otp-timer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin: 8px 0 4px;
+}
+
+.otp-timer strong {
+    color: var(--violet);
+    font-variant-numeric: tabular-nums;
+}
+
+.otp-expired {
+    color: var(--coral);
+}
+
+.auth-panel .button:disabled,
+.auth-panel .button:disabled:hover {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 .catalog-head {
     padding: 40px 0 48px;
     display: flex;

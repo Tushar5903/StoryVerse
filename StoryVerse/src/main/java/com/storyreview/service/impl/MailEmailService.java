@@ -23,6 +23,10 @@ public class MailEmailService implements EmailService {
         send(user.getEmail(), "Reset your StoryVerse password", "Reset your password using token: " + token);
     }
 
+    public void sendOtpEmail(String email, String code) {
+        send(email, "Your StoryVerse verification code", "Your verification code is " + code + ". It expires in 5 minutes.");
+    }
+
     private void send(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
