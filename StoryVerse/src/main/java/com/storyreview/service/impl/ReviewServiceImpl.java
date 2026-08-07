@@ -4,6 +4,7 @@ import com.storyreview.dto.request.ReviewRequests.CreateReviewRequest;
 import com.storyreview.dto.request.ReviewRequests.UpdateReviewRequest;
 import com.storyreview.dto.response.ApiResponses.ReviewResponse;
 import com.storyreview.entity.Review;
+import com.storyreview.enums.ReviewVerdict;
 import com.storyreview.enums.Role;
 import com.storyreview.exception.ApiException;
 import com.storyreview.repository.BookRepository;
@@ -88,7 +89,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ReviewResponse> getByBookId(Long bookId, Long requesterId, Role requesterRole, Pageable pageable) {
+    public Page<ReviewResponse> getByBookId(Long bookId, ReviewVerdict verdict, Long requesterId, Role requesterRole, Pageable pageable) {
         var book = books.findById(bookId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Book not found"));
         // Reviews are public on published books; draft reviews are only visible to the owner or an admin.
@@ -99,7 +100,10 @@ public class ReviewServiceImpl implements ReviewService {
                 return Page.empty(pageable);
             }
         }
-        return reviews.findByBookId(bookId, pageable).map(this::toResponse);
+        if (verdict == null) {
+            return reviews.findByBookId(bookId, pageable).map(this::toResponse);
+        }
+        return reviews.findByBookIdAndVerdict(bookId, verdict, pageable).map(this::toResponse);
     }
 
     @Override

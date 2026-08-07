@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { FiSearch, FiUser } from 'react-icons/fi'
+import { FiSearch, FiUser, FiX } from 'react-icons/fi'
 import { getMe } from '../../../services/usersApi'
 import { setUser } from '../../../store/authSlice'
 import UserMenu from '../UserMenu/UserMenu'
@@ -47,7 +47,7 @@ export default function SharedNav() {
     </header>
     <header className="mobile-header">
       <Link className="brand" to="/">STORY<span>VERSE</span></Link>
-      <button className="mobile-search-btn" aria-label="Search" aria-expanded={searchOpen} aria-controls="mobile-search-panel" onClick={() => setSearchOpen(value => !value)}><FiSearch size={20} /></button>
+      <button className="mobile-search-btn" aria-label={searchOpen ? 'Close search' : 'Search'} aria-expanded={searchOpen} aria-controls="mobile-search-panel" onClick={() => setSearchOpen(value => !value)}>{searchOpen ? <FiX size={20} /> : <FiSearch size={20} />}</button>
       {user ? <UserMenu /> : <Link className="mobile-auth" to="/login" aria-label="Log in"><FiUser size={20} /></Link>}
     </header>
     {searchOpen && <div className="mobile-search-panel" id="mobile-search-panel">

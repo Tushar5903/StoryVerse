@@ -3,6 +3,7 @@ package com.storyreview.controller;
 import com.storyreview.dto.request.ReviewRequests.CreateReviewRequest;
 import com.storyreview.dto.request.ReviewRequests.UpdateReviewRequest;
 import com.storyreview.dto.response.ApiResponses.ReviewResponse;
+import com.storyreview.enums.ReviewVerdict;
 import com.storyreview.security.CurrentUser;
 import com.storyreview.service.ReviewService;
 import jakarta.validation.Valid;
@@ -59,12 +60,13 @@ public class ReviewController {
     @GetMapping
     Page<ReviewResponse> getByBookOrUser(@RequestParam(required = false) Long bookId,
                                          @RequestParam(required = false) Long userId,
+                                         @RequestParam(required = false) ReviewVerdict verdict,
                                          @AuthenticationPrincipal CurrentUser user, Pageable pageable) {
         if (userId != null) {
             return reviewService.getByUserIdPublic(userId, pageable);
         }
         if (bookId != null) {
-            return reviewService.getByBookId(bookId, user == null ? null : user.id(),
+            return reviewService.getByBookId(bookId, verdict, user == null ? null : user.id(),
                     user == null ? null : user.role(), pageable);
         }
         return reviewService.getFeed(pageable);

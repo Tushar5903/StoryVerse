@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FiArrowLeft, FiArrowRight, FiBookOpen, FiMoon, FiSun } from 'react-icons/fi'
+import { FiArrowLeft, FiArrowRight, FiBookOpen, FiChevronDown, FiMoon, FiSun } from 'react-icons/fi'
 import { getBook } from '../../services/booksApi'
 import { listChapters } from '../../services/chaptersApi'
 import { getBookProgress, markRead, unmarkRead } from '../../services/progressApi'
@@ -20,6 +20,7 @@ export default function ReaderPage() {
   const [theme, setTheme] = useState('dark')
   const [readMap, setReadMap] = useState({})
   const [error, setError] = useState('')
+  const [chaptersOpen, setChaptersOpen] = useState(false)
 
   useEffect(() => {
     if (!bookId) return
@@ -61,7 +62,7 @@ export default function ReaderPage() {
 
   return <div className={`reader reader-${theme}`}>
     <div className="reader-bar">
-      <Link to={`/books/${bookId}`}><FiArrowLeft /> Back to story</Link>
+      <Link to={`/books/${bookId}`}><FiArrowLeft /> <span className="reader-back-full">Back to story</span><span className="reader-back-short">Back</span></Link>
       <div className="reader-brand">STORY<span>VERSE</span></div>
       <div className="theme-switch">
         <button className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')} title="Dark"><FiMoon /></button>
@@ -69,14 +70,16 @@ export default function ReaderPage() {
         <button className={theme === 'sepia' ? 'active' : ''} onClick={() => setTheme('sepia')} title="Sepia"><FiBookOpen /></button>
       </div>
     </div>
-    {error ? <div className="reader-error">{error}</div> : chapters.length > 0 && chapter ? <div className="reader-body">
-      <nav className="chapter-index">
+    {error ? <div className="reader-error">{error}</div> : chapters.length > 0 && chapter ? <>
+      <button className={`chapters-toggle${chaptersOpen ? ' open' : ''}`} aria-expanded={chaptersOpen} aria-controls="reader-chapters" onClick={() => setChaptersOpen(value => !value)}><span>CHAPTERS · {chapters.length}</span><FiChevronDown size={16} /></button>
+      <div className="reader-body">
+      <nav className={`chapter-index${chaptersOpen ? ' open' : ''}`} id="reader-chapters">
         <div className="eyebrow">{book?.title || 'THE ARCHIVE'}</div>
         <div className="reader-progress">
           <div className="reader-progress-head"><span>READ PROGRESS</span><b>{readCount}/{chapters.length}</b></div>
           <div className="reader-progress-bar"><span style={{ width: `${progress}%` }} /></div>
         </div>
-        {chapters.map((item, index) => <div className="chapter-item" key={item.id}><input type="checkbox" checked={!!readMap[item.id]} onChange={() => toggleRead(item.id)} aria-label={`Mark chapter ${item.chapterNumber} as read`} /><button className={index === active ? 'active' : ''} onClick={() => setActive(index)}>Chapter {item.chapterNumber}: {item.chapterTitle || item.title}</button></div>)}
+        {chapters.map((item, index) => <div className="chapter-item" key={item.id}><input type="checkbox" checked={!!readMap[item.id]} onChange={() => toggleRead(item.id)} aria-label={`Mark chapter ${item.chapterNumber} as read`} /><button className={index === active ? 'active' : ''} onClick={() => { setActive(index); setChaptersOpen(false) }}>Chapter {item.chapterNumber}: {item.chapterTitle || item.title}</button></div>)}
       </nav>
       <article className="reading-column">
         <div className="eyebrow">{book?.genre || 'MANUSCRIPT'} · PART ONE</div>
@@ -88,7 +91,8 @@ export default function ReaderPage() {
           <button onClick={next} disabled={active === chapters.length - 1}>Next chapter <FiArrowRight /></button>
         </div>
       </article>
-    </div> : <article className="reading-column">
+    </div>
+    </> : <article className="reading-column">
       <div className="eyebrow">{book?.genre || 'MANUSCRIPT'}</div>
       <h1>{book?.title || 'A story waiting to be opened'}</h1>
       <p className="dropcap">There is a particular silence that arrives just before a story begins. It is not empty. It is an invitation — a held breath, a page turned in the dark.</p>
