@@ -33,7 +33,7 @@ function BookCard({ book, count, index }) {
   const meta = count != null ? `${count} review${count === 1 ? '' : 's'}` : `${TYPE_LABEL[book.bookType] || book.bookType || 'Story'} · ${yearOf(book)}`
   return <motion.div className="discover-motion" role="listitem" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45, delay: index * .05 }}>
     <Link className="discover-card" to={`/books/${book.id}`}>
-      <div className="discover-poster">{cover ? <img src={cover} alt={book.title} loading="lazy" /> : <div className="discover-fallback">SV</div>}</div>
+      <div className="discover-poster">{cover ? <img src={cover} alt={book.title} loading="lazy" /> : <div className="discover-fallback">SV</div>}<span className="discover-read">Read story <FiArrowRight /></span></div>
       <div className="discover-info"><h3 className="discover-card-title">{book.title}</h3><p className="discover-meta">{meta}</p></div>
     </Link>
   </motion.div>

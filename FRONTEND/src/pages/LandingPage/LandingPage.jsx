@@ -1,131 +1,217 @@
-import { useEffect, useState } from 'react'
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Swiper, SwiperSlide } from 'swiper/react'
-import { FreeMode, Navigation } from 'swiper/modules'
-import { motion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { useSelector } from 'react-redux'
-import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi'
-import { listBooks } from '../../services/booksApi'
+import { FiArrowRight, FiArrowUpRight, FiCheck } from 'react-icons/fi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
+import { VERDICT_LABELS, VERDICT_COLORS } from '../../components/review-meter/constants'
 import './LandingPage.css'
-import 'swiper/css'
-import 'swiper/css/free-mode'
 
-const VERDICTS = [
-  ['Skip', '#FF5F7D', 'Not worth your night.'],
-  ['Timepass', '#F4B400', 'Fine when you are bored.'],
-  ['Go for it', '#00D084', 'Worth your night.'],
-  ['Perfection', '#A855F7', 'Clear your weekend.']
+const VERDICT_SECTIONS = [
+  { key: 'SKIP', label: VERDICT_LABELS.SKIP, color: VERDICT_COLORS.SKIP, start: 0, angle: 45, meaning: 'Not worth your night.' },
+  { key: 'TIMEPASS', label: VERDICT_LABELS.TIMEPASS, color: VERDICT_COLORS.TIMEPASS, start: 90, angle: 135, meaning: 'Fine when you are bored.' },
+  { key: 'GO_FOR_IT', label: VERDICT_LABELS.GO_FOR_IT, color: VERDICT_COLORS.GO_FOR_IT, start: 180, angle: 225, meaning: 'Worth your night.' },
+  { key: 'PERFECTION', label: VERDICT_LABELS.PERFECTION, color: VERDICT_COLORS.PERFECTION, start: 270, angle: 315, meaning: 'Clear your weekend.' },
 ]
-const gaugePoint = (degree, radius) => [100 + radius * Math.cos((degree * Math.PI) / 180), 100 - radius * Math.sin((degree * Math.PI) / 180)]
-const gaugeArc = (from, to) => { const [x1, y1] = gaugePoint(from, 85); const [x2, y2] = gaugePoint(to, 85); return `M ${x1} ${y1} A 85 85 0 0 1 ${x2} ${y2}` }
-const gaugeSegments = VERDICTS.map(([label, color], index) => ({ key: label, color, d: gaugeArc(180 - index * 46.5, 139.5 - index * 46.5) }))
 
-const fadeUp = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } }
+const VERDICT_JOURNEY = [
+  { num: '01', label: VERDICT_LABELS.SKIP, color: VERDICT_COLORS.SKIP, description: 'Not worth your time.', x: 245, y: 125, side: 'right', delay: 0.6 },
+  { num: '02', label: VERDICT_LABELS.TIMEPASS, color: VERDICT_COLORS.TIMEPASS, description: 'Fine when you have time.', x: 205, y: 270, side: 'left', delay: 1.2 },
+  { num: '03', label: VERDICT_LABELS.GO_FOR_IT, color: VERDICT_COLORS.GO_FOR_IT, description: 'Worth your night.', x: 375, y: 345, side: 'right', delay: 1.9 },
+  { num: '04', label: VERDICT_LABELS.PERFECTION, color: VERDICT_COLORS.PERFECTION, description: 'An unforgettable read.', x: 350, y: 435, side: 'left', delay: 2.6 },
+]
+const JOURNEY_POINTS = [[95, 45], [245, 125], [205, 270], [375, 345], [350, 435], [485, 490]]
+const catmullRomPath = points => {
+  const prev = i => points[i - 1] || [points[0][0] * 2 - points[1][0], points[0][1] * 2 - points[1][1]]
+  const next = i => points[i + 1] || [points[points.length - 1][0] * 2 - points[points.length - 2][0], points[points.length - 1][1] * 2 - points[points.length - 2][1]]
+  const controls = points.map((p, i) => ({
+    p1: [p[0] + (next(i)[0] - prev(i)[0]) / 6, p[1] + (next(i)[1] - prev(i)[1]) / 6],
+    p2: [p[0] - (next(i)[0] - prev(i)[0]) / 6, p[1] - (next(i)[1] - prev(i)[1]) / 6],
+  }))
+  let d = `M ${points[0][0]} ${points[0][1]}`
+  for (let i = 0; i < points.length - 1; i++) {
+    d += ` C ${controls[i].p1[0].toFixed(1)} ${controls[i].p1[1].toFixed(1)}, ${controls[i + 1].p2[0].toFixed(1)} ${controls[i + 1].p2[1].toFixed(1)}, ${points[i + 1][0]} ${points[i + 1][1]}`
+  }
+  return d
+}
+const VERDICT_PATH_D = catmullRomPath(JOURNEY_POINTS)
+const VERDICT_PATH_VIEWBOX = '0 0 560 520'
+
+const fadeUp = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } }
+
+function Reveal({ children, delay = 0, className = '' }) {
+  return <motion.div className={className} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-70px' }} transition={{ duration: 0.55, ease: 'easeOut', delay }}>{children}</motion.div>
+}
+
+function VerdictJourney() {
+  const rootRef = useRef(null)
+  const inView = useInView(rootRef, { once: true, margin: '-60px' })
+  return (
+    <div className={`vj${inView ? ' vj-visible' : ''}`} ref={rootRef}>
+      <div className="vj-desktop">
+        <svg className="vj-svg" viewBox={VERDICT_PATH_VIEWBOX} aria-hidden="true">
+          <defs>
+            <linearGradient id="vjGrad" gradientUnits="userSpaceOnUse" x1="95" y1="45" x2="485" y2="490">
+              <stop offset="0" stopColor={VERDICT_COLORS.SKIP} />
+              <stop offset="0.34" stopColor={VERDICT_COLORS.TIMEPASS} />
+              <stop offset="0.66" stopColor={VERDICT_COLORS.GO_FOR_IT} />
+              <stop offset="1" stopColor={VERDICT_COLORS.PERFECTION} />
+            </linearGradient>
+          </defs>
+          <path className="vj-path" pathLength="100" d={VERDICT_PATH_D} />
+        </svg>
+        {VERDICT_JOURNEY.map(step => (
+          <div key={step.num} className={`vj-anchor vj-anchor--${step.side}`} style={{ '--vjx': `${(step.x / 560) * 100}%`, '--vjy': `${(step.y / 520) * 100}%`, '--vj-delay': `${step.delay}s`, '--vj-color': step.color }}>
+            <span className="vj-tick" />
+            <span className="vj-dot" />
+            <span className="vj-label">
+              <span className="vj-num">{step.num}</span>
+              <span className="vj-name">{step.label}</span>
+              <span className="vj-desc">{step.description}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="vj-seal" aria-hidden="true"><VerdictSeal /></div>
+      <ol className="vj-mobile" aria-hidden="true">
+        {VERDICT_JOURNEY.map(step => (
+          <li key={step.num} className="vj-step" style={{ '--vj-color': step.color }}>
+            <span className="vj-step-dot" />
+            <span className="vj-step-text">
+              <span className="vj-num">{step.num}</span>
+              <span className="vj-step-name">{step.label}</span>
+              <span className="vj-step-desc">{step.description}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+function Manuscript() {
+  return <div className="manuscript" aria-hidden="true">
+    <span className="manuscript-drop" />
+    <span className="manuscript-line" />
+    <span className="manuscript-line" />
+    <span className="manuscript-line" />
+    <span className="manuscript-line" />
+  </div>
+}
+
+function MiniBook() {
+  const PAGE_ANGLES = [4.5, 6.6, 8.7, 10.8, 12.9]
+  return <div className="book3d book3d--mini" aria-hidden="true">
+    <div className="book3d-scene">
+      <div className="book3d-book">
+        <div className="book3d-cover book3d-cover--back" />
+        <div className="book3d-pages book3d-pages--left">{PAGE_ANGLES.map((angle, index) => <i key={index} style={{ '--tilt': `${angle}deg` }} />)}</div>
+        <div className="book3d-pages book3d-pages--right">{PAGE_ANGLES.map((angle, index) => <i key={index} style={{ '--tilt': `-${angle}deg` }} />)}</div>
+        <div className="book3d-text book3d-text--left"><i /><i /><i /><i /></div>
+        <div className="book3d-text book3d-text--right"><i /><i /><i /><i /></div>
+        <div className="book3d-cover book3d-cover--front" />
+        <div className="book3d-spine" />
+        <div className="book3d-light" />
+      </div>
+    </div>
+  </div>
+}
+
+function VerdictSeal() {
+  return <div className="seal3d" aria-hidden="true">
+    <div className="seal3d-scene">
+      <div className="seal3d-shadow" />
+      <div className="seal3d-object">
+        <div className="seal3d-back" />
+        <div className="seal3d-face">
+          <span className="seal3d-ring" />
+          <span className="seal3d-mark"><FiCheck /></span>
+          <span className="seal3d-word">Verdict</span>
+        </div>
+        <div className="seal3d-rim" />
+        <div className="seal3d-light" />
+      </div>
+    </div>
+  </div>
+}
 
 export default function LandingPage() {
   const user = useSelector(state => state.auth.user)
-  const [books, setBooks] = useState([])
-  useEffect(() => { listBooks('?size=20&sort=updatedAt,desc').then(page => setBooks(page.content || [])).catch(() => {}) }, [])
   return (
     <>
       <SharedNav />
       <main className="lp-page">
         <section className="lp-hero">
-          <motion.div className="lp-hero-copy" initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12 } } }}>
-            <motion.div variants={fadeUp} className="lp-eyebrow">A reader's verdict, on record</motion.div>
-            <motion.h1 variants={fadeUp}>Every story deserves a <em>straight answer.</em></motion.h1>
-            <motion.p variants={fadeUp}>Read a story, then say what it's worth — <strong>skip</strong>, <strong>timepass</strong>, <strong>go for it</strong>, <strong>perfection</strong>. Four honest words. No star ratings, no decimals, no fuss.</motion.p>
+          <motion.div className="lp-hero-copy" initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09 } } }}>
+            <motion.p variants={fadeUp} className="lp-kicker">The reading community</motion.p>
+            <motion.h1 variants={fadeUp}>Stories worth reading.<br /><em>Opinions worth sharing.</em></motion.h1>
+            <motion.p variants={fadeUp} className="lp-hero-lead">Discover stories, read what the community thinks, and leave your own verdict.</motion.p>
             <motion.div variants={fadeUp} className="lp-actions">
               {user ? (
                 <>
-                  <Link className="button" to="/reader-dashboard">Reader Dashboard <FiArrowUpRight /></Link>
+                  <Link className="button lp-btn-primary" to="/reader-dashboard">Reader Dashboard <FiArrowUpRight /></Link>
                   <Link className="lp-text-link" to="/dashboard">Writer Dashboard <FiArrowRight /></Link>
                 </>
               ) : (
                 <>
-                  <Link className="button" to="/explore">Start reading <FiArrowUpRight /></Link>
-                  <Link className="lp-text-link" to="/register">Start writing <FiArrowRight /></Link>
+                  <Link className="button lp-btn-primary" to="/explore">Explore Stories <FiArrowUpRight /></Link>
+                  <Link className="lp-text-link" to="/register">Start Writing <FiArrowRight /></Link>
                 </>
               )}
             </motion.div>
           </motion.div>
-          <motion.aside className="meter-card" initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.6, ease: 'easeOut' }}>
-            <div className="meter-card-head">
-              <span className="meter-card-title">The meter</span>
-              <span className="meter-card-note">one of four words, every time</span>
-            </div>
-            <svg viewBox="0 0 200 115" className="meter-gauge" aria-hidden="true">
-              {gaugeSegments.map(segment => <path key={segment.key} d={segment.d} stroke={segment.color} strokeWidth="8" fill="none" />)}
-              <text x="100" y="90" textAnchor="middle" className="meter-center">4 words</text>
-            </svg>
-            <ul className="meter-rows">
-              {VERDICTS.map(([label, color, meaning]) => (
-                <li key={label}>
-                  <span className="meter-dot" style={{ background: color }} />
-                  <span className="meter-label">{label}</span>
-                  <span className="meter-meaning">{meaning}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="meter-foot">You read. You pick a word. The needle moves. That's the whole system.</p>
-          </motion.aside>
+          <motion.div className="lp-hero-visual" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.9, delay: 0.2 }}>
+            <VerdictJourney />
+          </motion.div>
         </section>
 
-        <section className="lp-how">
-          <div className="lp-eyebrow">How it works</div>
-          <h2>Three moves, then you're set.</h2>
-          <ol className="how-steps">
-            <li>
-              <span className="how-num">01</span>
-              <h3>Read</h3>
-              <p>Pick a story and read it at your own pace — chapters, cover to cover, whenever the mood strikes.</p>
-            </li>
-            <li>
-              <span className="how-num">02</span>
-              <h3>Leave a verdict</h3>
-              <p>One tap for how it actually felt. No five-star math, no pressure to be clever about it.</p>
-            </li>
-            <li>
-              <span className="how-num">03</span>
-              <h3>Watch the meter</h3>
-              <p>Every verdict nudges the needle. The meter shows what most readers think, at a glance.</p>
-            </li>
-          </ol>
-        </section>
-
-        <section className="lp-shelf">
-          <div className="shelf-head">
-            <div>
-              <div className="lp-eyebrow">Fresh on the shelf</div>
-              <h2>Trending manuscripts</h2>
-            </div>
-            <div className="shelf-tools">
-              <div className="lp-shelf-nav">
-                <button className="lp-swiper-prev" type="button" aria-label="Previous manuscripts" title="Previous"><FiArrowLeft /></button>
-                <button className="lp-swiper-next" type="button" aria-label="Next manuscripts" title="Next"><FiArrowRight /></button>
+        <section className="lp-journey">
+          <Reveal>
+            <div className="journey-head"><h2>Read. Feel. Decide.</h2></div>
+            <div className="journey-track">
+              <div className="journey-stage">
+                <span className="stage-num">01</span>
+                <div className="stage-visual"><Manuscript /></div>
+                <h3>Discover</h3>
+                <p>Find a story that catches you.</p>
               </div>
-              <Link className="shelf-link" to="/explore">See the whole shelf <FiArrowRight /></Link>
+              <div className="journey-stage">
+                <span className="stage-num">02</span>
+                <div className="stage-visual"><MiniBook /></div>
+                <h3>Read</h3>
+                <p>Read it at your own pace.</p>
+              </div>
+              <div className="journey-stage">
+                <span className="stage-num">03</span>
+                <div className="stage-visual"><VerdictSeal /></div>
+                <h3>Verdict</h3>
+                <p>Leave one honest opinion.</p>
+              </div>
             </div>
-          </div>
-          <Swiper modules={[FreeMode, Navigation]} freeMode spaceBetween={16} slidesPerView="auto" navigation={{ prevEl: '.lp-swiper-prev', nextEl: '.lp-swiper-next' }}>
-            {books.map(book => (
-              <SwiperSlide className="lp-slide" key={book.id}>
-                <Link to={`/books/${book.id}`}>
-                  <div className="lp-cover">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</div>
-                  <h3>{book.title}</h3>
-                  <p>{book.bookType || 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : '—'}</p>
-                </Link>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          </Reveal>
         </section>
 
-        <section className="lp-closing">
-          <h2>Your verdict is the missing one.</h2>
-          <p>Books get better when readers actually say what they think.</p>
-          {user ? <Link className="button" to="/explore">Keep reading <FiArrowUpRight /></Link> : <Link className="button" to="/register">Start writing <FiArrowUpRight /></Link>}
+        <section className="lp-community">
+          <Reveal className="community-inner">
+            <h2>Every story deserves<br />an honest reader.</h2>
+            <div className="verdict-tokens">
+              {VERDICT_SECTIONS.map((section, index) => (
+                <span className="token" key={section.key} style={{ '--float-delay': `${index * 0.7}s`, color: section.color }}><i />{section.label}</span>
+              ))}
+            </div>
+          </Reveal>
+        </section>
+
+        <section className="lp-cta">
+          <Reveal className="cta-inner">
+            <h2>Your next story is waiting.</h2>
+            <p className="lp-cta-sub">Read something new. Leave something honest.</p>
+            <div className="lp-actions cta-actions">
+              <Link className="button lp-btn-primary" to="/explore">Explore Stories <FiArrowUpRight /></Link>
+              {user ? <Link className="lp-text-link" to="/dashboard">Writer Dashboard <FiArrowRight /></Link> : <Link className="lp-text-link" to="/register">Start Writing <FiArrowRight /></Link>}
+            </div>
+          </Reveal>
         </section>
       </main>
       <Footer />
