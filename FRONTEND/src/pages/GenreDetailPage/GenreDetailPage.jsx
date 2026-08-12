@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { FiArrowLeft } from 'react-icons/fi'
 import { listBooks } from '../../services/booksApi'
-import { fadeInUp } from '../../animations/variants'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
+import BookCard, { SkeletonGrid } from '../../components/common/BookCard/BookCard'
+import InfiniteLoader from '../../components/common/InfiniteLoader/InfiniteLoader'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import { DEFAULT_GENRES } from '../../data/genres'
 import './GenreDetailPage.css'
 
@@ -40,19 +40,19 @@ export default function GenreDetailPage({ genre }) {
 }
 
 function GenreResults({ name }) {
-  const [state, setState] = useState({ books: [], loading: true, error: '' })
-  useEffect(() => {
-    let active = true
-    listBooks(`?size=24&genre=${encodeURIComponent(name)}`)
-      .then(page => active && setState({ books: page.content || [], loading: false, error: '' }))
-      .catch(err => active && setState({ books: [], loading: false, error: err.message }))
-    return () => { active = false }
-  }, [name])
+  const { items, initialLoading, loadingMore, hasMore, error, totalElements, sentinelRef } = useInfiniteScroll({
+    resetKey: name,
+    fetchPage: (page, size, signal) => listBooks(`?genre=${encodeURIComponent(name)}&size=${size}&page=${page}`, { signal }),
+  })
+  const total = totalElements ?? items.length
   return <>
-    {!state.loading && !state.error && <span className="genre-detail-count">{state.books.length} {state.books.length === 1 ? 'story' : 'stories'} in the archive</span>}
-    {state.loading ? <div className="genre-detail-empty">Searching the stacks…</div>
-      : state.error ? <div className="error-box">{state.error}</div>
-      : state.books.length ? <div className="genre-detail-grid">{state.books.map(book => <motion.div {...fadeInUp} className="genre-detail-card" key={book.id}><Link to={`/books/${book.id}`}><div className="genre-detail-cover">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</div><h2>{book.title}</h2><p>{book.bookType || 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : '—'}</p></Link></motion.div>)}</div>
-      : <div className="genre-detail-empty">No {name} stories in the archive yet. Check back soon.</div>}
+    {!initialLoading && !error && <span className="genre-detail-count">{total} {total === 1 ? 'story' : 'stories'} in the archive</span>}
+    {initialLoading ? <SkeletonGrid />
+      : !items.length ? (error ? <div className="error-box">{error}</div> : <div className="genre-detail-empty">No {name} stories in the archive yet. Check back soon.</div>)
+      : <>
+        <div className="discover-grid" role="list">{items.map((book, index) => <BookCard key={book.id} book={book} index={index} />)}</div>
+        <div ref={sentinelRef} aria-hidden="true" />
+        <InfiniteLoader loading={loadingMore} hasMore={hasMore} error={error} />
+      </>}
   </>
 }

@@ -11,6 +11,7 @@ import com.storyreview.exception.ApiException;
 import com.storyreview.repository.BookRepository;
 import com.storyreview.repository.ChapterRepository;
 import com.storyreview.service.ChapterService;
+import com.storyreview.util.HtmlSanitizer;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class ChapterServiceImpl implements ChapterService {
         chapter.setBook(book);
         chapter.setChapterNumber(request.chapterNumber());
         chapter.setChapterTitle(request.chapterTitle());
-        chapter.setChapterContent(request.chapterContent());
+        chapter.setChapterContent(HtmlSanitizer.clean(request.chapterContent()));
         return toResponse(saveChapter(chapter));
     }
 
@@ -53,7 +54,7 @@ public class ChapterServiceImpl implements ChapterService {
         }
         chapter.setChapterNumber(request.chapterNumber());
         chapter.setChapterTitle(request.chapterTitle());
-        chapter.setChapterContent(request.chapterContent());
+        chapter.setChapterContent(HtmlSanitizer.clean(request.chapterContent()));
         return toResponse(saveChapter(chapter));
     }
 
@@ -66,7 +67,7 @@ public class ChapterServiceImpl implements ChapterService {
         }
         chapter.setChapterNumber(request.chapterNumber());
         chapter.setChapterTitle(request.chapterTitle());
-        chapter.setChapterContent(request.chapterContent());
+        chapter.setChapterContent(HtmlSanitizer.clean(request.chapterContent()));
         return toResponse(saveChapter(chapter));
     }
 
@@ -86,8 +87,10 @@ public class ChapterServiceImpl implements ChapterService {
 
     @Override
     @Transactional(readOnly = true)
-    public ChapterResponse getById(Long chapterId) {
-        return toResponse(findChapter(chapterId));
+    public ChapterResponse getById(Long chapterId, Long requesterId, Role requesterRole) {
+        Chapter chapter = findChapter(chapterId);
+        assertReadable(chapter.getBook(), requesterId, requesterRole);
+        return toResponse(chapter);
     }
 
     @Override
@@ -124,10 +127,14 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     /**
-     * Only the creator of the book, or a user with ROLE_ADMIN, may create/update/delete chapters.
+     * Review books (created for an author profile) are published as a single work without chapters.
+     * Only the creator of a story book, or a user with ROLE_ADMIN, may create/update/delete chapters.
      * All other authenticated users are read-only (enforced separately via @PreAuthorize on GET endpoints).
      */
     private void assertCanManage(Book book, Long userId, Role role) {
+        if (book.getBookType() == BookType.REVIEW_BOOK) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Review books do not support chapters");
+        }
         if (role == Role.ADMIN) {
             return;
         }

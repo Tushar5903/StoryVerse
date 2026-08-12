@@ -7,7 +7,7 @@ const formWith = (payload, file, fileField = 'thumbnail') => {
   return body
 }
 
-export const listBooks = query => apiClient(`/books${query || ''}`)
+export const listBooks = (query, options) => apiClient(`/books${query || ''}`, options)
 export const getBook = id => apiClient(`/books/${id}`)
 export const listGenres = () => apiClient('/books/genres')
 export const listMyBooks = query => apiClient(`/books/mine${query || ''}`)

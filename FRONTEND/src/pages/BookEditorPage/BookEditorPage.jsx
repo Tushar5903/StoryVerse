@@ -130,7 +130,7 @@ export default function BookEditorPage({ id }) {
                 <label>Tags (comma separated)<input value={form.tags} onChange={set('tags')} placeholder="romance, slow-burn" /></label>
               </div>
               {isAdmin && (editing || bookType === 'REVIEW_BOOK') && <label>Author<select value={form.authorId} onChange={set('authorId')} required><option value="">Select an author</option>{authors.map(author => <option value={author.id} key={author.id}>{author.name}</option>)}</select></label>}
-              {editing && <div className="editor-hint">
+              {editing && bookType === 'USER_BOOK' && <div className="editor-hint">
                 <strong>Next step:</strong> after saving, add chapters from the <Link to={`/write?bookId=${id}`}>chapters editor</Link> and publish the story when it has at least one chapter and a description.
               </div>}</>}
           </section>

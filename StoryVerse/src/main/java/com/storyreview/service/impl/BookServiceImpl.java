@@ -142,6 +142,14 @@ public class BookServiceImpl implements BookService {
     public BookResponse update(Long id, UpdateBookRequest request, MultipartFile thumbnail, Long userId, Role role) {
         Book book = findBook(id);
         assertCanModify(book, userId, role);
+        // A user may only attach their story to their own user-linked author profile.
+        // Admins (REVIEW_BOOK and ownership overrides) may point a book at any author.
+        if (role != Role.ADMIN && request.authorId() != null && !request.authorId().equals(book.getAuthor().getId())) {
+            Author target = findAuthor(request.authorId());
+            if (target.getUser() == null || !target.getUser().getId().equals(userId)) {
+                throw new ApiException(HttpStatus.FORBIDDEN, "You can only attach your book to your own author profile");
+            }
+        }
         validateDuplicateTitle(request.title(), request.authorId(), id);
         applyFields(book, request.title(), request.subtitle(), request.description(), request.coverImage(),
                 request.language(), request.genres(), request.tags(), request.publicationDate(), request.authorId(),
@@ -174,11 +182,17 @@ public class BookServiceImpl implements BookService {
         // visible to their owner (getMine) or an admin (admin endpoints).
         Specification<Book> spec = (root, cq, cb) -> cb.isTrue(root.get("published"));
         if (query != null && !query.isBlank()) {
-            String pattern = "%" + query.toLowerCase() + "%";
+            // Escape LIKE wildcards (% and _) and the escape char itself so user input
+            // is matched literally instead of acting as a pattern.
+            String escaped = query.toLowerCase()
+                    .replace("!", "!!")
+                    .replace("%", "!%")
+                    .replace("_", "!_");
+            String pattern = "%" + escaped + "%";
             spec = spec.and((root, cq, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("title")), pattern),
-                    cb.like(cb.lower(root.get("subtitle")), pattern),
-                    cb.like(cb.lower(root.get("description")), pattern)));
+                    cb.like(cb.lower(root.get("title")), pattern, '!'),
+                    cb.like(cb.lower(root.get("subtitle")), pattern, '!'),
+                    cb.like(cb.lower(root.get("description")), pattern, '!')));
         }
         if (authorId != null) {
             spec = spec.and((root, cq, cb) -> cb.equal(root.get("author").get("id"), authorId));

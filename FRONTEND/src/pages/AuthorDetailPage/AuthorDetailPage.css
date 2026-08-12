@@ -1,35 +1,31 @@
 .author-page {
-    max-width: 1050px;
+    max-width: 1280px;
     margin: auto;
-    padding: 70px 38px 90px;
-    color: var(--sv-cream)
+    padding: 70px 48px 100px;
+    color: var(--sv-cream);
+    background: #080808
 }
 
-.author-head {
-    display: grid;
-    grid-template-columns: 130px 1fr auto;
-    gap: 30px;
+.author-hero {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    text-align: center;
     border-bottom: 1px solid var(--sv-line);
-    padding-bottom: 38px
-}
-
-.author-add-book {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap
+    padding: 22px 0 56px;
+    margin-bottom: 62px
 }
 
 .author-avatar {
-    width: 130px;
-    height: 130px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
     background: linear-gradient(145deg, #2e2138, #836e9d);
     display: grid;
     place-items: center;
-    font: 52px var(--sv-serif);
-    overflow: hidden
+    overflow: hidden;
+    margin-bottom: 30px;
+    box-shadow: 0 0 0 1px var(--sv-line), 0 18px 44px rgba(0, 0, 0, .4)
 }
 
 .author-avatar img {
@@ -38,14 +34,40 @@
     object-fit: cover
 }
 
-.author-head h1 {
-    font: 500 clamp(34px, 5vw, 52px)/1 var(--sv-serif);
-    margin: 12px 0 6px
+.author-initial {
+    font: 500 54px var(--sv-serif);
+    color: rgba(244, 239, 230, .85)
+}
+
+.author-hero h1 {
+    font: 500 clamp(36px, 5vw, 54px)/1 var(--sv-serif);
+    letter-spacing: -.03em;
+    margin: 16px 0 10px
+}
+
+.author-role {
+    font: 11px var(--sv-mono);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--sv-violet);
+    margin: 0
+}
+
+.author-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 11px var(--sv-mono);
+    color: var(--sv-muted);
+    margin: 16px 0 0
+}
+
+.author-meta-sep {
+    opacity: .5
 }
 
 .author-handle {
     color: var(--sv-violet);
-    font-size: 13px;
     text-decoration: none
 }
 
@@ -56,70 +78,258 @@
 .author-place {
     display: inline-flex;
     align-items: center;
+    gap: 7px
+}
+
+.author-hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px
+}
+
+.author-add {
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-    font: 11px var(--sv-mono);
+    margin: 0
+}
+
+.author-edit {
+    border: 1px solid var(--sv-line);
+    border-radius: 14px;
+    background: var(--sv-panel);
+    padding: 34px;
+    margin: 0 auto 64px;
+    max-width: 760px
+}
+
+.author-edit h2 {
+    font: 500 28px var(--sv-serif);
+    margin: 8px 0 24px
+}
+
+.author-edit form {
+    display: grid;
+    gap: 18px
+}
+
+.author-edit label {
+    display: grid;
+    gap: 8px;
     color: var(--sv-muted);
-    margin: 14px 0 0
+    font: 10px var(--sv-mono);
+    text-transform: uppercase;
+    letter-spacing: .14em
+}
+
+.author-edit input,
+.author-edit textarea {
+    width: 100%;
+    padding: 12px 14px;
+    color: var(--sv-cream);
+    background: var(--sv-panel-2);
+    border: 1px solid var(--sv-line);
+    border-radius: 6px;
+    outline: 0;
+    resize: vertical;
+    font: 13px var(--sv-sans);
+    text-transform: none;
+    letter-spacing: normal
+}
+
+.author-edit input:focus,
+.author-edit textarea:focus {
+    border-color: var(--sv-violet)
+}
+
+.author-edit input::placeholder,
+.author-edit textarea::placeholder {
+    color: var(--sv-muted)
+}
+
+.author-edit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px
+}
+
+.author-edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px
+}
+
+.author-tagline {
+    margin: 26px 0 0;
+    font: 400 italic 19px/1.6 var(--sv-serif);
+    color: var(--sv-muted);
+    max-width: 620px
+}
+
+.author-section {
+    margin-bottom: 72px
+}
+
+.author-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 30px
+}
+
+.author-section-title h2 {
+    font: 500 30px/1.2 var(--sv-serif);
+    letter-spacing: -.01em;
+    margin: 10px 0 0
+}
+
+.ab-nav {
+    display: flex;
+    gap: 10px
+}
+
+.ab-nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--sv-line);
+    background: transparent;
+    color: var(--sv-muted);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease
+}
+
+.ab-nav-btn:hover:not(:disabled) {
+    color: var(--sv-violet);
+    border-color: var(--sv-violet)
+}
+
+.ab-nav-btn:disabled {
+    opacity: .28;
+    cursor: default
+}
+
+.author-books-outer {
+    position: relative
+}
+
+.author-books {
+    display: flex;
+    gap: 22px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 4px 2px 14px
+}
+
+.author-books::-webkit-scrollbar {
+    display: none
+}
+
+.ab-card {
+    flex: 0 0 auto;
+    width: 156px;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    outline-offset: 6px
+}
+
+.ab-cover {
+    position: relative;
+    aspect-ratio: 2/3;
+    border-radius: 7px;
+    overflow: hidden;
+    background: linear-gradient(160deg, #131019, #07070a);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .32);
+    display: grid;
+    place-items: center
+}
+
+.ab-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .26s ease-out, filter .26s ease-out
+}
+
+.ab-fallback {
+    font: 600 22px var(--sv-serif);
+    color: var(--sv-violet)
+}
+
+.ab-title {
+    margin-top: 12px;
+    font: 600 15px/1.35 var(--sv-sans);
+    color: #eaeaea;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.7em;
+    transition: color .26s ease-out
+}
+
+.ab-meta {
+    margin-top: 5px;
+    font: 12.5px/1.4 var(--sv-sans);
+    color: #777
+}
+
+.ab-reviews {
+    margin-top: 3px;
+    font: 10px var(--sv-mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--sv-violet)
+}
+
+@media (hover: hover) {
+    .ab-card:hover .ab-cover {
+        transform: translateY(-3px)
+    }
+
+    .ab-card:hover .ab-cover img {
+        transform: scale(1.03);
+        filter: brightness(1.08)
+    }
+
+    .ab-card:hover .ab-title {
+        color: #fff
+    }
+}
+
+.ab-fade {
+    position: absolute;
+    top: 0;
+    bottom: 14px;
+    width: 42px;
+    pointer-events: none
+}
+
+.ab-fade--left {
+    left: 0;
+    background: linear-gradient(90deg, #080808 12%, rgba(8, 8, 8, 0))
+}
+
+.ab-fade--right {
+    right: 0;
+    background: linear-gradient(270deg, #080808 12%, rgba(8, 8, 8, 0))
 }
 
 .author-bio {
     font-size: 15px;
-    line-height: 1.8;
+    line-height: 1.85;
     color: var(--sv-muted);
     max-width: 720px;
-    margin: 28px 0 0
-}
-
-.author-books {
-    margin-top: 52px
-}
-
-.author-books h2 {
-    font: 500 32px var(--sv-serif);
-    margin: 10px 0 24px
-}
-
-.author-book-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px
-}
-
-.author-book-card {
-    display: block;
-    background: var(--sv-panel);
-    border: 1px solid var(--sv-line);
-    border-radius: 12px;
-    padding: 12px;
-    text-decoration: none;
-    color: var(--sv-cream);
-    transition: border-color .2s ease-in-out
-}
-
-.author-book-card:hover {
-    border-color: var(--sv-violet)
-}
-
-.author-book-card img,
-.author-book-fallback {
-    width: 100%;
-    aspect-ratio: 3/4;
-    object-fit: cover;
-    background: linear-gradient(145deg, #2e2138, #836e9d);
-    display: grid;
-    place-items: center;
-    font: 28px var(--sv-serif)
-}
-
-.author-book-card h3 {
-    font: 16px var(--sv-serif);
-    margin: 11px 0 4px
-}
-
-.author-book-card p {
-    font: 10px var(--sv-mono);
-    color: var(--sv-muted);
-    margin: 0
+    margin: 26px 0 0
 }
 
 .author-empty {
@@ -153,26 +363,48 @@
 
 @media(max-width:800px) {
     .author-page {
-        padding: 45px 20px 80px
+        padding: 44px 20px 84px
     }
 
-    .author-head {
-        grid-template-columns: 84px 1fr;
-        gap: 20px
+    .author-hero {
+        padding: 16px 0 42px;
+        margin-bottom: 48px
     }
 
     .author-avatar {
-        width: 84px;
-        height: 84px;
-        font: 32px var(--sv-serif)
+        width: 112px;
+        height: 112px;
+        margin-bottom: 24px
     }
 
-    .author-book-grid {
-        grid-template-columns: repeat(2, 1fr)
+    .author-initial {
+        font-size: 40px
     }
 
-    .author-add-book {
-        grid-column: 1/-1;
-        justify-self: start
+    .author-edit {
+        padding: 24px 18px;
+        margin-bottom: 48px
+    }
+
+    .author-edit-grid {
+        grid-template-columns: 1fr
+    }
+
+    .ab-card {
+        width: 126px
+    }
+
+    .author-books {
+        gap: 16px
+    }
+
+    .ab-nav-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px
+    }
+
+    .author-section {
+        margin-bottom: 56px
     }
 }

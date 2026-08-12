@@ -43,6 +43,19 @@ function ChapterEditor({ bookId }) {
   useEffect(() => { load() }, [bookId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextNumber = useMemo(() => chapters.reduce((max, chapter) => Math.max(max, chapter.chapterNumber || 0), 0) + 1, [chapters])
+
+  if (book && book.bookType === 'REVIEW_BOOK') {
+    return <main className="chapters-page">
+      <div className="chapters-head">
+        <Link to="/dashboard" className="chapters-back"><FiArrowLeft /> Back to dashboard</Link>
+        <div className="eyebrow">WRITER STUDIO · {book.genre || 'REVIEW BOOK'}</div>
+        <h1>This book does not use chapters.</h1>
+        <p>“{book.title}” is a review book tied to an author profile. Review books are published as a single complete work — there are no chapters to add or remove.</p>
+      </div>
+      <div className="writer-empty">You can still <Link to={`/books/${book.id}/edit`}>edit its details</Link> from your dashboard.</div>
+    </main>
+  }
+
   const set = field => event => setForm(current => ({ ...current, [field]: field === 'chapterNumber' ? (Number(event.target.value) || 1) : event.target.value }))
 
   const startNew = () => { setEditingId(null); setForm({ chapterNumber: nextNumber, chapterTitle: '', chapterContent: '' }) }

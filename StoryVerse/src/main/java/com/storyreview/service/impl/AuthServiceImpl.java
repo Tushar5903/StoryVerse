@@ -126,10 +126,25 @@ public class AuthServiceImpl implements AuthService {
         return authResponse(user, issueRefresh(user));
     }
 
+    /**
+     * Refresh tokens are single-use: every successful refresh revokes the presented
+     * token and mints a new one. Presenting an already-used/expired token is treated
+     * as a possible theft and revokes the whole refresh family for that user.
+     * Enabled/banned flags are re-checked here, so a disabled or banned account
+     * cannot mint fresh access tokens.
+     */
     public AuthResponse refresh(RefreshTokenRequest request) {
-        RefreshToken token = refreshTokens.findByToken(request.refreshToken()).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
-        if (token.isRevoked() || token.getExpiresAt().isBefore(Instant.now())) throw new ApiException(HttpStatus.UNAUTHORIZED, "Refresh token expired or revoked");
-        return authResponse(token.getUser(), token.getToken());
+        RefreshToken token = refreshTokens.findByToken(request.refreshToken())
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+        if (token.isRevoked() || token.getExpiresAt().isBefore(Instant.now())) {
+            refreshTokens.revokeAllForUser(token.getUser().getId());
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Refresh token expired or revoked");
+        }
+        User user = token.getUser();
+        if (!user.isEnabled()) throw new ApiException(HttpStatus.FORBIDDEN, "User account is disabled");
+        if (user.isBanned()) throw new ApiException(HttpStatus.FORBIDDEN, "User account is banned");
+        token.setRevoked(true);
+        return authResponse(user, issueRefresh(user));
     }
 
     public void forgotPassword(ForgotPasswordRequest request) {
@@ -175,7 +190,20 @@ public class AuthServiceImpl implements AuthService {
             user.setBio(bio.trim());
         }
         if (dateOfBirth != null) {
-            user.setDateOfBirth(dateOfBirth.isBlank() ? null : LocalDate.parse(dateOfBirth));
+            if (dateOfBirth.isBlank()) {
+                user.setDateOfBirth(null);
+            } else {
+                LocalDate parsed;
+                try {
+                    parsed = LocalDate.parse(dateOfBirth);
+                } catch (java.time.format.DateTimeParseException ex) {
+                    throw new ApiException(HttpStatus.BAD_REQUEST, "Date of birth must be a valid date (YYYY-MM-DD)");
+                }
+                if (parsed.isAfter(LocalDate.now())) {
+                    throw new ApiException(HttpStatus.BAD_REQUEST, "Date of birth cannot be in the future");
+                }
+                user.setDateOfBirth(parsed);
+            }
         }
         user.setInstagram(blankToNull(instagram));
         user.setTwitter(blankToNull(twitter));

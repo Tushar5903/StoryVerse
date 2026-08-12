@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public interface OtpCodeRepository extends JpaRepository<OtpCode, Long> {
@@ -18,4 +19,8 @@ public interface OtpCodeRepository extends JpaRepository<OtpCode, Long> {
     @Modifying
     @Query("UPDATE OtpCode o SET o.used = true WHERE o.id = :id AND o.used = false")
     int markUsed(@Param("id") Long id);
+
+    @Modifying
+    @Query("DELETE FROM OtpCode o WHERE o.expiresAt < :now OR o.used = true")
+    int deleteExpired(@Param("now") Instant now);
 }

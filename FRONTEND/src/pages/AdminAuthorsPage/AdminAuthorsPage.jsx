@@ -1,38 +1,41 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { FiArrowRight, FiArrowUpRight, FiPlus, FiSearch, FiX } from 'react-icons/fi'
+import { FiArrowUpRight, FiPlus, FiSearch, FiX } from 'react-icons/fi'
 import { createAuthor } from '../../services/authorsApi'
 import { listAllAuthors } from '../../services/adminApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
+import InfiniteLoader from '../../components/common/InfiniteLoader/InfiniteLoader'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import './AdminAuthorsPage.css'
 
 const emptyForm = { name: '', profileImage: '', dateOfBirth: '', placeOfBirth: '', biography: '' }
+
+const SKELETON_ITEMS = Array.from({ length: 6 })
+function DirectorySkeleton() {
+  return <div className="admin-author-grid" aria-hidden="true">{SKELETON_ITEMS.map((_, i) => <div className="admin-author-item" key={i}><span className="admin-author-avatar admin-author-avatar--skeleton" /><span className="admin-author-skel" /><span className="admin-author-skel admin-author-skel--short" /></div>)}</div>
+}
 
 export default function AdminAuthorsPage() {
   const [searchParams] = useSearchParams()
   const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === '1')
   const [form, setForm] = useState(emptyForm)
   const [submitting, setSubmitting] = useState(false)
-  const [authors, setAuthors] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [refreshNonce, setRefreshNonce] = useState(0)
 
-  const load = () => {
-    listAllAuthors('?size=100')
-      .then(page => { setAuthors(page.content || []); setError('') })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
-  }
-  useEffect(load, [])
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query.trim()), 250)
+    return () => clearTimeout(id)
+  }, [query])
 
-  const filtered = query.trim()
-    ? authors.filter(author => [author.name, author.username, author.placeOfBirth, author.biography]
-        .filter(Boolean)
-        .some(value => value.toLowerCase().includes(query.trim().toLowerCase())))
-    : authors
+  const { items: authors, initialLoading: loading, loadingMore, hasMore, error, sentinelRef } = useInfiniteScroll({
+    pageSize: 60,
+    resetKey: `${debouncedQuery}#${refreshNonce}`,
+    fetchPage: (page, size, signal) => listAllAuthors(`?size=${size}&page=${page}${debouncedQuery ? `&q=${encodeURIComponent(debouncedQuery)}` : ''}`, { signal }),
+  })
 
   const set = key => event => setForm(value => ({ ...value, [key]: event.target.value }))
 
@@ -50,7 +53,7 @@ export default function AdminAuthorsPage() {
       toast.success('Author created.')
       setForm(emptyForm)
       setCreateOpen(false)
-      load()
+      setRefreshNonce(value => value + 1)
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -67,7 +70,10 @@ export default function AdminAuthorsPage() {
           <h1>Authors.</h1>
           <p>Every voice in the archive, on record. Create a new author or open a profile to see their published work.</p>
         </div>
-        <button className="button" onClick={() => setCreateOpen(value => !value)}>{createOpen ? <><FiX /> Close</> : <><FiPlus /> Create author</>}</button>
+        <div className="admin-authors-head-actions">
+          <label className="aa-search"><FiSearch /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search authors…" aria-label="Search authors" /></label>
+          <button className="button" onClick={() => setCreateOpen(value => !value)}>{createOpen ? <><FiX /> Close</> : <><FiPlus /> Create author</>}</button>
+        </div>
       </div>
 
       {createOpen && <section className="aa-create">
@@ -88,30 +94,28 @@ export default function AdminAuthorsPage() {
         </form>
       </section>}
 
-      {error && <div className="error-box">{error}</div>}
+      {error && !authors.length && <div className="error-box">{error}</div>}
 
-      <section className="aa-directory">
-        <div className="aa-directory-head">
+      <section className="admin-authors-section">
+        <div className="section-title">
           <div>
             <div className="eyebrow">THE ARCHIVE</div>
-            <h2>All authors</h2>
+            <h2>All Authors</h2>
           </div>
-          <label className="aa-search"><FiSearch /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search authors…" /></label>
         </div>
-        {loading ? <div className="aa-empty">Loading the directory…</div>
-          : !authors.length ? <div className="aa-empty"><strong>The directory is empty.</strong><p>Create the first author to open the archive.</p></div>
-            : !filtered.length ? <div className="aa-empty"><strong>No matches.</strong><p>No author matches “{query}”.</p></div>
-              : <div className="aa-grid">{filtered.map(author => <article className="aa-card" key={author.id}>
-                <Link className="aa-avatar" to={`/authors/${author.id}`}>{author.profileImage ? <img src={author.profileImage} alt="" /> : (author.name || 'A').slice(0, 1)}</Link>
-                <h3><Link to={`/authors/${author.id}`}>{author.name}</Link></h3>
-                {author.username && <span className="aa-handle">@{author.username}</span>}
-                <p>{author.biography || 'A voice in the StoryVerse archive.'}</p>
-                <div className="aa-card-meta">
-                  <span>{author.authorType === 'ADMIN' ? 'Staff author' : 'Author'}</span>
-                  <Link to={`/authors/${author.id}`}>View profile <FiArrowRight /></Link>
-                </div>
-              </article>)}
-            </div>}
+        {loading ? <DirectorySkeleton />
+          : !authors.length ? <div className="aa-empty"><strong>{debouncedQuery ? 'No matches.' : 'The directory is empty.'}</strong><p>{debouncedQuery ? `No author matches “${debouncedQuery}”.` : 'Create the first author to open the archive.'}</p></div>
+            : <>
+              <div className="admin-author-grid">
+                {authors.map(author => <Link className="admin-author-item" to={`/authors/${author.id}`} key={author.id}>
+                  <span className="admin-author-avatar">{author.profileImage ? <img src={author.profileImage} alt={author.name} loading="lazy" /> : <span>{(author.name || 'A').slice(0, 1)}</span>}</span>
+                  <span className="admin-author-name">{author.name}</span>
+                  <span className="admin-author-role">{author.authorType === 'ADMIN' ? 'Author' : 'Writer'}</span>
+                </Link>)}
+              </div>
+              <div ref={sentinelRef} aria-hidden="true" />
+              <InfiniteLoader loading={loadingMore} hasMore={hasMore} error={error} />
+            </>}
       </section>
     </main>
     <Footer />

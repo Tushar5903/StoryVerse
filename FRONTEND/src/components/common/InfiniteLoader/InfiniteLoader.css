@@ -1,0 +1,41 @@
+.inf-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 0 8px;
+  color: var(--sv-muted);
+  font-size: 13.5px;
+  font-weight: 500;
+  min-height: 56px;
+}
+
+.inf-loader--error {
+  color: var(--sv-coral);
+}
+
+.inf-loader--end {
+  font-size: 12.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .7;
+}
+
+.inf-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--sv-line);
+  border-top-color: var(--sv-violet);
+  animation: inf-spin .8s linear infinite;
+}
+
+@keyframes inf-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inf-spinner {
+    animation-duration: 1.6s;
+  }
+}

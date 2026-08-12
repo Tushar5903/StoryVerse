@@ -1,6 +1,6 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { useSelector } from 'react-redux'
 import { FiArrowRight, FiArrowUpRight, FiCheck } from 'react-icons/fi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
@@ -37,16 +37,31 @@ const catmullRomPath = points => {
 }
 const VERDICT_PATH_D = catmullRomPath(JOURNEY_POINTS)
 const VERDICT_PATH_VIEWBOX = '0 0 560 520'
+const PATH_DRAW_MS = 2800
+const PATH_REST_MS = 2000
 
 const fadeUp = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } }
 
 function Reveal({ children, delay = 0, className = '' }) {
-  return <motion.div className={className} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-70px' }} transition={{ duration: 0.55, ease: 'easeOut', delay }}>{children}</motion.div>
+  return <motion.div className={className}
+    initial={{ opacity: 0, y: 16 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: '-70px' }}
+    transition={{ duration: 0.55, ease: 'easeOut', delay }}>
+    {children}
+  </motion.div>
 }
 
 function VerdictJourney() {
   const rootRef = useRef(null)
   const inView = useInView(rootRef, { once: true, margin: '-60px' })
+  const reducedMotion = useReducedMotion()
+  const [drawCycle, setDrawCycle] = useState(0)
+  useEffect(() => {
+    if (!inView || reducedMotion) return
+    const id = setTimeout(() => setDrawCycle(cycle => cycle + 1), PATH_DRAW_MS + PATH_REST_MS)
+    return () => clearTimeout(id)
+  }, [inView, drawCycle, reducedMotion])
   return (
     <div className={`vj${inView ? ' vj-visible' : ''}`} ref={rootRef}>
       <div className="vj-desktop">
@@ -59,7 +74,7 @@ function VerdictJourney() {
               <stop offset="1" stopColor={VERDICT_COLORS.PERFECTION} />
             </linearGradient>
           </defs>
-          <path className="vj-path" pathLength="100" d={VERDICT_PATH_D} />
+          <path key={drawCycle} className="vj-path" pathLength="100" d={VERDICT_PATH_D} />
         </svg>
         {VERDICT_JOURNEY.map(step => (
           <div key={step.num} className={`vj-anchor vj-anchor--${step.side}`} style={{ '--vjx': `${(step.x / 560) * 100}%`, '--vjy': `${(step.y / 520) * 100}%`, '--vj-delay': `${step.delay}s`, '--vj-color': step.color }}>
@@ -73,7 +88,6 @@ function VerdictJourney() {
           </div>
         ))}
       </div>
-      <div className="vj-seal" aria-hidden="true"><VerdictSeal /></div>
       <ol className="vj-mobile" aria-hidden="true">
         {VERDICT_JOURNEY.map(step => (
           <li key={step.num} className="vj-step" style={{ '--vj-color': step.color }}>

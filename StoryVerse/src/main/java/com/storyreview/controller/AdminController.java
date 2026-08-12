@@ -13,15 +13,21 @@ import com.storyreview.repository.ReviewRepository;
 import com.storyreview.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.persistence.criteria.JoinType;
 
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
+@Transactional(readOnly = true)
 public class AdminController {
     private final UserRepository users;
     private final BookRepository books;
@@ -52,8 +58,20 @@ public class AdminController {
     }
 
     @GetMapping("/authors")
-    Page<AuthorResponse> allAuthors(Pageable pageable) {
-        return authors.findAll(pageable).map(this::toAuthorResponse);
+    Page<AuthorResponse> allAuthors(@RequestParam(required = false) String q, Pageable pageable) {
+        if (q == null || q.isBlank()) {
+            return authors.findAll(pageable).map(this::toAuthorResponse);
+        }
+        // Escaped case-insensitive LIKE over name / place-of-birth / biography and the
+        // linked user's username. Pagination still happens at the database level.
+        String escaped = q.toLowerCase().replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        String pattern = "%" + escaped + "%";
+        Specification<Author> spec = (root, cq, cb) -> cb.or(
+                cb.like(cb.lower(root.get("name")), pattern, '!'),
+                cb.like(cb.lower(root.get("placeOfBirth")), pattern, '!'),
+                cb.like(cb.lower(root.get("biography")), pattern, '!'),
+                cb.like(cb.lower(root.join("user", JoinType.LEFT).get("username")), pattern, '!'));
+        return authors.findAll(spec, pageable).map(this::toAuthorResponse);
     }
 
     // Published books by a specific user.

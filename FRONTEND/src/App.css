@@ -1339,6 +1339,208 @@ details p {
     gap: 8px;
 }
 
+.admin-authors-actions .text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-author-nav {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+
+.admin-author-nav:hover:not(:disabled) {
+    color: var(--violet);
+    border-color: var(--violet);
+}
+
+.admin-author-nav:disabled {
+    opacity: .28;
+    cursor: default;
+}
+
+.admin-author-row-outer {
+    position: relative;
+}
+
+.admin-author-row {
+    display: flex;
+    gap: 48px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 4px 2px 14px;
+    scroll-snap-type: x proximity;
+}
+
+.admin-author-row::-webkit-scrollbar {
+    display: none;
+}
+
+.admin-author-item {
+    flex: 0 0 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    outline-offset: 6px;
+    scroll-snap-align: start;
+    transition: opacity .2s ease;
+}
+
+.admin-author-avatar {
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(145deg, #2e2138, #836e9d);
+    display: grid;
+    place-items: center;
+    font: 500 52px var(--serif);
+    color: rgba(244, 239, 230, .85);
+    line-height: 1;
+    transition: box-shadow .25s ease, transform .25s ease;
+}
+
+.admin-author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.admin-author-name {
+    margin-top: 16px;
+    font: 600 19px/1.3 var(--sans);
+    color: #eaeaea;
+    max-width: 180px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color .2s ease;
+}
+
+.admin-author-role {
+    margin-top: 7px;
+    font: 400 14px var(--sans);
+    color: var(--muted);
+}
+
+.admin-author-avatar--skeleton {
+    animation: shimmer 1.4s linear infinite;
+    background: linear-gradient(100deg, #15131a 40%, #1e1b25 50%, #15131a 60%);
+    background-size: 200% 100%;
+}
+
+.admin-author-skel {
+    margin-top: 16px;
+    width: 96px;
+    height: 13px;
+    border-radius: 4px;
+    background: linear-gradient(100deg, #15131a 40%, #1e1b25 50%, #15131a 60%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+}
+
+.admin-author-skel--short {
+    margin-top: 7px;
+    width: 64px;
+    height: 10px;
+}
+
+.admin-author-empty {
+    max-width: 560px;
+    margin: 0;
+    padding: 36px 30px;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    color: var(--muted);
+    text-align: center;
+}
+
+@media (hover: hover) {
+    .admin-author-item:hover .admin-author-avatar {
+        box-shadow: 0 0 0 1px var(--violet), 0 12px 30px rgba(169, 139, 216, .18);
+        transform: translateY(-3px);
+    }
+
+    .admin-author-item:hover .admin-author-name {
+        color: #fff;
+    }
+}
+
+.admin-author-fade {
+    position: absolute;
+    top: 0;
+    bottom: 14px;
+    width: 42px;
+    pointer-events: none;
+}
+
+.admin-author-fade--left {
+    left: 0;
+    background: linear-gradient(90deg, #000 12%, rgba(0, 0, 0, 0));
+}
+
+.admin-author-fade--right {
+    right: 0;
+    background: linear-gradient(270deg, #000 12%, rgba(0, 0, 0, 0));
+}
+
+@media(max-width:800px) {
+    .admin-authors-section {
+        margin-bottom: 56px;
+    }
+
+    .admin-author-row {
+        gap: 20px;
+    }
+
+    .admin-author-item {
+        flex-basis: 112px;
+    }
+
+    .admin-author-avatar {
+        width: 110px;
+        height: 110px;
+        font-size: 38px;
+    }
+
+    .admin-author-name {
+        font-size: 15px;
+        margin-top: 14px;
+        max-width: 112px;
+    }
+
+    .admin-author-role {
+        font-size: 12.5px;
+        margin-top: 6px;
+    }
+
+    .admin-author-nav {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .admin-authors-actions {
+        gap: 12px;
+    }
+}
+
 .not-found {
     text-align: center;
     padding-top: 120px;

@@ -11,10 +11,10 @@ public final class ChapterRequests {
     public record CreateChapterRequest(
             @NotNull @Min(1) Integer chapterNumber,
             @NotBlank @Size(max = 240) String chapterTitle,
-            @NotBlank String chapterContent) {}
+            @NotBlank @Size(max = 1_000_000) String chapterContent) {}
 
     public record UpdateChapterRequest(
             @NotNull @Min(1) Integer chapterNumber,
             @NotBlank @Size(max = 240) String chapterTitle,
-            @NotBlank String chapterContent) {}
+            @NotBlank @Size(max = 1_000_000) String chapterContent) {}
 }

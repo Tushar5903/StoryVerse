@@ -59,8 +59,9 @@ public class ChapterController {
 
     @GetMapping("/api/chapters/{chapterId}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    ChapterResponse getById(@PathVariable Long chapterId) {
-        return chapterService.getById(chapterId);
+    ChapterResponse getById(@PathVariable Long chapterId,
+                            @AuthenticationPrincipal CurrentUser user) {
+        return chapterService.getById(chapterId, user.id(), user.role());
     }
 
     @PutMapping("/api/chapters/{chapterId}")

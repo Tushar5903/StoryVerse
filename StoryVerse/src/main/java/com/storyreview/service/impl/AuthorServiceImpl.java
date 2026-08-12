@@ -5,11 +5,14 @@ import com.storyreview.dto.request.AuthorRequests.UpdateAuthorRequest;
 import com.storyreview.dto.response.ApiResponses.AuthorResponse;
 import com.storyreview.dto.response.ApiResponses.BookResponse;
 import com.storyreview.entity.Author;
+import com.storyreview.entity.User;
 import com.storyreview.enums.AuthorType;
+import com.storyreview.enums.Role;
 import com.storyreview.entity.Book;
 import com.storyreview.exception.ApiException;
 import com.storyreview.repository.AuthorRepository;
 import com.storyreview.repository.BookRepository;
+import com.storyreview.security.CurrentUser;
 import com.storyreview.service.AuthorService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -44,8 +47,11 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public AuthorResponse update(Long id, UpdateAuthorRequest request) {
+    public AuthorResponse update(Long id, UpdateAuthorRequest request, CurrentUser currentUser) {
         Author author = findAuthor(id);
+        if (!canEdit(author, currentUser)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You are not authorized to edit this author");
+        }
         if (authors.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
             throw new ApiException(HttpStatus.CONFLICT, "Author with this name already exists");
         }
@@ -80,6 +86,21 @@ public class AuthorServiceImpl implements AuthorService {
         return authors.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Author not found"));
     }
 
+    /**
+     * A user-linked author profile mirrors the linked user's identity (image, bio, date of birth
+     * and profile data), so only that user may edit it. Admins manage the standalone author
+     * profiles they create (author.user == null); user-linked profiles are the user's own.
+     */
+    private boolean canEdit(Author author, CurrentUser currentUser) {
+        if (currentUser == null) {
+            return false;
+        }
+        if (currentUser.role() == Role.ADMIN) {
+            return author.getUser() == null;
+        }
+        return author.getUser() != null && author.getUser().getId().equals(currentUser.id());
+    }
+
     private Author saveAuthor(Author author) {
         try {
             return authors.save(author);
@@ -98,11 +119,26 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     private AuthorResponse toResponse(Author author) {
-        return new AuthorResponse(author.getId(), author.getName(), author.getProfileImage(),
-                author.getDateOfBirth(), author.getPlaceOfBirth(), author.getBiography(),
-                author.getAuthorType(), author.getUser() == null ? null : author.getUser().getId(),
-                author.getUser() == null ? null : author.getUser().getUsername(),
-                author.getUser() == null ? null : author.getUser().getEmail(),
+        User linkedUser = author.getUser();
+        String profileImage = author.getProfileImage();
+        String biography = author.getBiography();
+        java.time.LocalDate dateOfBirth = author.getDateOfBirth();
+        if (linkedUser != null) {
+            if (profileImage == null) {
+                profileImage = linkedUser.getProfileImage();
+            }
+            if (biography == null) {
+                biography = linkedUser.getBio();
+            }
+            if (dateOfBirth == null) {
+                dateOfBirth = linkedUser.getDateOfBirth();
+            }
+        }
+        return new AuthorResponse(author.getId(), author.getName(), profileImage,
+                dateOfBirth, author.getPlaceOfBirth(), biography,
+                author.getAuthorType(), linkedUser == null ? null : linkedUser.getId(),
+                linkedUser == null ? null : linkedUser.getUsername(),
+                linkedUser == null ? null : linkedUser.getEmail(),
                 author.getCreatedAt(), author.getUpdatedAt());
     }
 

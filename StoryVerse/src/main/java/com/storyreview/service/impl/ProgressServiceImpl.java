@@ -47,6 +47,10 @@ public class ProgressServiceImpl implements ProgressService {
         if (!chapter.getBook().getId().equals(bookId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Chapter does not belong to the book");
         }
+        // Draft chapters are not publicly readable, so their content can't be marked as read.
+        if (!chapter.getBook().isPublished() && !chapter.getBook().getCreatedBy().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Book not found");
+        }
         if (progressRepo.findByUserIdAndChapterId(userId, chapterId).isPresent()) {
             return;
         }

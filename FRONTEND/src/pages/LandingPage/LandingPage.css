@@ -256,21 +256,6 @@
     color: var(--lp-muted)
 }
 
-.vj-seal {
-    position: absolute;
-    left: 83.6%;
-    top: 87.5%;
-    width: 104px;
-    transform: translate(-50%, -50%);
-    z-index: 0;
-    opacity: 0;
-    transition: opacity .9s ease 2.4s
-}
-
-.vj-visible .vj-seal {
-    opacity: 1
-}
-
 .vj-mobile {
     display: none;
     list-style: none;
@@ -928,15 +913,6 @@
         width: min(100%, 400px);
         margin: 0 auto
     }
-
-    .vj-seal {
-        position: relative;
-        left: auto;
-        top: auto;
-        width: 100px;
-        margin: 48px auto 0;
-        transform: none
-    }
 }
 
 @media (max-width: 640px) {
@@ -995,7 +971,6 @@
         transform: none
     }
 
-    .vj-seal,
     .vj-mobile {
         opacity: 1;
         transition: none

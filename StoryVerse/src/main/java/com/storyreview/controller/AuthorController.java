@@ -4,12 +4,14 @@ import com.storyreview.dto.request.AuthorRequests.CreateAuthorRequest;
 import com.storyreview.dto.request.AuthorRequests.UpdateAuthorRequest;
 import com.storyreview.dto.response.ApiResponses.AuthorResponse;
 import com.storyreview.dto.response.ApiResponses.BookResponse;
+import com.storyreview.security.CurrentUser;
 import com.storyreview.service.AuthorService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,9 +33,10 @@ public class AuthorController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    AuthorResponse update(@PathVariable Long id, @Valid @RequestBody UpdateAuthorRequest request) {
-        return authorService.update(id, request);
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    AuthorResponse update(@PathVariable Long id, @Valid @RequestBody UpdateAuthorRequest request,
+                          @AuthenticationPrincipal CurrentUser currentUser) {
+        return authorService.update(id, request, currentUser);
     }
 
     @GetMapping

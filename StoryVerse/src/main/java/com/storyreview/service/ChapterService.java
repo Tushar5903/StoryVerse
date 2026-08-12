@@ -11,7 +11,7 @@ public interface ChapterService {
     ChapterResponse create(Long bookId, CreateChapterRequest request, Long userId, Role role);
     ChapterResponse update(Long chapterId, UpdateChapterRequest request, Long userId, Role role);
     void delete(Long chapterId, Long userId, Role role);
-    ChapterResponse getById(Long chapterId);
+    ChapterResponse getById(Long chapterId, Long requesterId, Role requesterRole);
     ChapterResponse getById(Long bookId, Long chapterId, Long requesterId, Role requesterRole);
     ChapterResponse update(Long bookId, Long chapterId, UpdateChapterRequest request, Long userId, Role role);
     void delete(Long bookId, Long chapterId, Long userId, Role role);

@@ -70,7 +70,7 @@ export default function WriterDashboardPage() {
                   <p>{book.genre ? <span className="writer-genre">{book.genre}</span> : null}{book.language || 'Story'} · {book.bookType === 'REVIEW_BOOK' ? 'Review book' : 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : 'No year yet'}</p>
                   <div className="writer-actions">
                     <Link to={`/books/${book.id}/edit`}>Edit details</Link>
-                    <Link to={`/write?bookId=${book.id}`}>Chapters</Link>
+                    {book.bookType !== 'REVIEW_BOOK' && <Link to={`/write?bookId=${book.id}`}>Chapters</Link>}
                     {!book.published && <button onClick={() => onPublish(book.id)}>Publish</button>}
                     <button className="danger" onClick={() => onDelete(book)}>Delete</button>
                   </div>

@@ -1,0 +1,334 @@
+.ap-page {
+    max-width: 1400px;
+    margin: auto;
+    padding: 64px 48px 104px;
+    color: var(--sv-cream);
+    background: #080808
+}
+
+.ap-hero {
+    padding: 14px 0 46px;
+    border-bottom: 1px solid var(--sv-line);
+    margin-bottom: 64px
+}
+
+.ap-hero h1 {
+    font: 500 clamp(44px, 6vw, 72px)/1 var(--sv-serif);
+    letter-spacing: -.03em;
+    margin: 14px 0 14px
+}
+
+.ap-hero p {
+    color: var(--sv-muted);
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 520px
+}
+
+.ap-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(100%, 340px);
+    margin-top: 30px;
+    padding: 0 16px;
+    height: 46px;
+    border: 1px solid var(--sv-line);
+    border-radius: 999px;
+    color: var(--sv-muted);
+    transition: border-color .2s ease, color .2s ease
+}
+
+.ap-search:focus-within {
+    border-color: var(--sv-violet);
+    color: var(--sv-violet)
+}
+
+.ap-search input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--sv-cream);
+    font: 400 14.5px var(--sv-sans)
+}
+
+.ap-search input::placeholder {
+    color: var(--sv-muted)
+}
+
+.ap-section {
+    margin-bottom: 72px
+}
+
+.ap-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 48px
+}
+
+.ap-title h2 {
+    font: 500 26px/1.2 var(--sv-serif);
+    letter-spacing: -.01em;
+    margin: 9px 0 0
+}
+
+.ap-nav {
+    display: flex;
+    gap: 10px
+}
+
+.ap-nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--sv-line);
+    background: transparent;
+    color: var(--sv-muted);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease, background .2s ease
+}
+
+.ap-nav-btn:hover:not(:disabled) {
+    color: var(--sv-violet);
+    border-color: var(--sv-violet)
+}
+
+.ap-nav-btn:disabled {
+    opacity: .28;
+    cursor: default
+}
+
+.ap-row-outer {
+    position: relative
+}
+
+.ap-row {
+    display: flex;
+    gap: 30px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 4px 2px 14px;
+    scroll-snap-type: x proximity
+}
+
+.ap-row::-webkit-scrollbar {
+    display: none
+}
+
+.ap-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 156px;
+    text-decoration: none;
+    color: inherit;
+    outline-offset: 6px;
+    scroll-snap-align: start
+}
+
+.ap-avatar {
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #2e2138, #836e9d);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    transition: box-shadow .25s ease, transform .25s ease
+}
+
+.ap-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover
+}
+
+.ap-initial {
+    font: 500 52px var(--sv-serif);
+    color: rgba(244, 239, 230, .85);
+    line-height: 1
+}
+
+.ap-name {
+    margin-top: 36px;
+    font: 600 19px/1.3 var(--sv-sans);
+    color: #eaeaea;
+    text-align: center;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color .2s ease
+}
+
+.ap-role {
+    margin-top: 8px;
+    font: 400 14px var(--sv-sans);
+    color: var(--sv-muted)
+}
+
+@media (hover: hover) {
+    .ap-item:hover .ap-avatar {
+        box-shadow: 0 0 0 1px var(--sv-violet), 0 12px 30px rgba(169, 139, 216, .18);
+        transform: translateY(-3px)
+    }
+
+    .ap-item:hover .ap-name {
+        color: #fff
+    }
+}
+
+.ap-fade {
+    position: absolute;
+    top: 0;
+    bottom: 14px;
+    width: 42px;
+    pointer-events: none
+}
+
+.ap-fade--left {
+    left: 0;
+    background: linear-gradient(90deg, #080808 12%, rgba(8, 8, 8, 0))
+}
+
+.ap-fade--right {
+    right: 0;
+    background: linear-gradient(270deg, #080808 12%, rgba(8, 8, 8, 0))
+}
+
+.ap-empty {
+    border: 1px dashed var(--sv-line);
+    border-radius: 14px;
+    padding: 64px 30px;
+    text-align: center;
+    color: var(--sv-muted)
+}
+
+.ap-empty h2 {
+    font: 500 28px var(--sv-serif);
+    color: var(--sv-cream);
+    margin: 12px 0 8px
+}
+
+.ap-item--skeleton .ap-avatar {
+    animation: shimmer 1.4s linear infinite;
+    background: linear-gradient(100deg, #15131a 40%, #1e1b25 50%, #15131a 60%);
+    background-size: 200% 100%
+}
+
+.ap-skel-name {
+    margin-top: 36px;
+    width: 96px;
+    height: 13px;
+    border-radius: 4px;
+    background: linear-gradient(100deg, #15131a 40%, #1e1b25 50%, #15131a 60%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite
+}
+
+.ap-skel-role {
+    margin-top: 8px;
+    width: 64px;
+    height: 10px;
+    border-radius: 4px;
+    background: linear-gradient(100deg, #15131a 40%, #1e1b25 50%, #15131a 60%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite
+}
+
+@keyframes shimmer {
+    to {
+        background-position: -200% 0
+    }
+}
+
+@media(max-width:1120px) {
+    .ap-row {
+        gap: 26px
+    }
+
+    .ap-item {
+        width: 134px
+    }
+
+    .ap-avatar {
+        width: 128px;
+        height: 128px
+    }
+
+    .ap-initial {
+        font-size: 44px
+    }
+
+    .ap-name {
+        font-size: 17px
+    }
+}
+
+@media(max-width:800px) {
+    .ap-page {
+        padding: 44px 20px 84px
+    }
+
+    .ap-hero {
+        padding: 10px 0 34px;
+        margin-bottom: 48px
+    }
+
+    .ap-section {
+        margin-bottom: 56px
+    }
+
+    .ap-head {
+        margin-bottom: 38px
+    }
+
+    .ap-row {
+        gap: 16px
+    }
+
+    .ap-item {
+        width: 106px
+    }
+
+    .ap-avatar {
+        width: 100px;
+        height: 100px
+    }
+
+    .ap-initial {
+        font-size: 34px
+    }
+
+    .ap-name {
+        font-size: 15px;
+        margin-top: 26px
+    }
+
+    .ap-role {
+        font-size: 12.5px;
+        margin-top: 6px
+    }
+
+    .ap-skel-name {
+        margin-top: 26px
+    }
+
+    .ap-nav-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px
+    }
+
+    .ap-search {
+        margin-top: 22px
+    }
+}

@@ -20,7 +20,12 @@ public class MailEmailService implements EmailService {
     }
 
     public void sendPasswordResetEmail(User user, String token) {
-        send(user.getEmail(), "Reset your StoryVerse password", "Reset your password using token: " + token);
+        String link = baseUrl + "/reset-password?token=" + token;
+        send(user.getEmail(), "Reset your StoryVerse password",
+                "We received a request to reset your StoryVerse password.\n\n"
+                        + "Open the link below to choose a new password (valid for 1 hour):\n"
+                        + link
+                        + "\n\nIf you didn't request this, you can safely ignore this email.");
     }
 
     public void sendOtpEmail(String email, String code) {
