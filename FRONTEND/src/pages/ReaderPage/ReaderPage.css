@@ -1,4 +1,5 @@
 .reader {
+    --reader-bar-h: 67px;
     min-height: 100vh;
     transition: background .35s ease, color .35s ease
 }
@@ -8,6 +9,7 @@
     --reader-mute: #958d9b;
     --reader-accent: var(--sv-violet);
     --reader-hairline: var(--sv-line);
+    --reader-bar-bg: #000000;
     background: #000000;
     color: #f4efe6
 }
@@ -17,6 +19,7 @@
     --reader-mute: #6a5f6e;
     --reader-accent: #6d4fb0;
     --reader-hairline: rgba(0, 0, 0, .14);
+    --reader-bar-bg: #f4efe6;
     background: #f4efe6;
     color: #1a1620
 }
@@ -26,6 +29,7 @@
     --reader-mute: #7a6846;
     --reader-accent: #6d4fb0;
     --reader-hairline: rgba(58, 44, 26, .22);
+    --reader-bar-bg: #e9dcc4;
     background: #e9dcc4;
     color: #3a2c1a
 }
@@ -35,6 +39,10 @@
 }
 
 .reader-bar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--reader-bar-bg);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -94,9 +102,9 @@
     padding: 34px 26px;
     border-right: 1px solid var(--reader-hairline);
     position: sticky;
-    top: 0;
+    top: var(--reader-bar-h);
     align-self: start;
-    max-height: 100vh;
+    max-height: calc(100vh - var(--reader-bar-h));
     overflow: auto
 }
 
@@ -309,6 +317,10 @@
 }
 
 @media(max-width:800px) {
+    .reader {
+        --reader-bar-h: 59px
+    }
+
     .reader-body {
         grid-template-columns: 1fr
     }
@@ -334,6 +346,10 @@
 }
 
 @media(max-width:640px) {
+    .reader {
+        --reader-bar-h: 55px
+    }
+
     .reader-body .reading-column {
         padding: 30px 16px 60px
     }

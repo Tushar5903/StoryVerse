@@ -1,23 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { FiArrowLeft, FiArrowRight, FiBookOpen, FiCheck, FiChevronDown, FiMoon, FiSun } from 'react-icons/fi'
 import DOMPurify from 'dompurify'
 import { getBook } from '../../services/booksApi'
 import { getChapter, listChapters } from '../../services/chaptersApi'
 import { getBookProgress, markRead, unmarkRead } from '../../services/progressApi'
+import { paginateChapter } from '../../utils/paginate'
 import CompletionModal from '../../components/common/CompletionModal/CompletionModal'
 import './ReaderPage.css'
 
-const looksLikeHtml = value => /<\/?[a-z][\s\S]*>/i.test(String(value || '').trim())
 // Defense-in-depth: never trust the regex heuristic alone - sanitize on the read path with
 // the same allowlist the backend applies at write time.
 const sanitizeHtml = value => DOMPurify.sanitize(value, {
   ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'br', 'em', 'strong', 'u', 's', 'del', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'sup', 'sub'],
   ALLOWED_ATTR: ['href', 'title'],
 })
-const renderContent = value => looksLikeHtml(value)
-  ? <div className="prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }} />
-  : <div className="prose">{String(value).split('\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
 
 export default function ReaderPage() {
   const navigate = useNavigate()
@@ -32,6 +29,7 @@ export default function ReaderPage() {
   const [chaptersOpen, setChaptersOpen] = useState(false)
   const [bodies, setBodies] = useState({})
   const [showComplete, setShowComplete] = useState(false)
+  const [pageIndex, setPageIndex] = useState(0)
 
   useEffect(() => {
     if (!bookId) return
@@ -49,6 +47,7 @@ export default function ReaderPage() {
         setBook(currentBook)
         setChapters(currentChapters)
         setActive(0)
+        setPageIndex(0)
         setBodies({})
         setReadMap(Object.fromEntries(progress.map(item => [item.chapterId, item.markedAt])))
       })
@@ -58,6 +57,11 @@ export default function ReaderPage() {
 
   const chapter = chapters[active]
   const chapterBody = chapter ? (chapter.chapterContent || chapter.content || bodies[chapter.id]) : null
+  const pages = useMemo(() => paginateChapter(chapterBody), [chapterBody])
+  const page = Math.min(pageIndex, Math.max(pages.length - 1, 0))
+  const isLastPage = page >= pages.length - 1
+
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }, [pageIndex, active])
   useEffect(() => {
     if (!chapter) return
     const inline = chapter.chapterContent || chapter.content
@@ -82,7 +86,8 @@ export default function ReaderPage() {
     }
   }, [active, chapters, bodies, bookId, chapter])
 
-  const go = index => { if (index >= 0 && index < chapters.length) setActive(index) }
+  const go = index => { if (index >= 0 && index < chapters.length) { setActive(index); setPageIndex(0) } }
+  const goPage = index => setPageIndex(Math.max(0, Math.min(index, pages.length - 1)))
   const toggleRead = id => {
     const marked = !!readMap[id]
     const previous = readMap[id]
@@ -106,6 +111,7 @@ export default function ReaderPage() {
       return
     }
     setActive(active + 1)
+    setPageIndex(0)
   }
   const readCount = chapters.filter(item => readMap[item.id]).length
   const progress = chapters.length ? Math.round((readCount / chapters.length) * 100) : 0
@@ -131,17 +137,17 @@ export default function ReaderPage() {
           <div className="reader-progress-head"><span>READ PROGRESS</span><b>{readCount}/{chapters.length}</b></div>
           <div className="reader-progress-bar"><span style={{ width: `${progress}%` }} /></div>
         </div>
-        {chapters.map((item, index) => <div className="chapter-item" key={item.id}><input type="checkbox" checked={!!readMap[item.id]} onChange={() => toggleRead(item.id)} aria-label={`Mark chapter ${item.chapterNumber} as read`} /><button className={index === active ? 'active' : ''} onClick={() => { setActive(index); setChaptersOpen(false) }}>Chapter {item.chapterNumber}: {item.chapterTitle || item.title}</button></div>)}
+        {chapters.map((item, index) => <div className="chapter-item" key={item.id}><input type="checkbox" checked={!!readMap[item.id]} onChange={() => toggleRead(item.id)} aria-label={`Mark chapter ${item.chapterNumber} as read`} /><button className={index === active ? 'active' : ''} onClick={() => { go(index); setChaptersOpen(false) }}>Chapter {item.chapterNumber}: {item.chapterTitle || item.title}</button></div>)}
       </nav>
       <article className="reading-column">
         <div className="eyebrow">{book?.genre || 'MANUSCRIPT'} · PART ONE</div>
         <h1>{chapter.chapterTitle || chapter.title}</h1>
-        {chapterBody ? renderContent(chapterBody) : <p className="dropcap">This chapter is still being written.</p>}
-        <div className="reader-nav">
-          <button onClick={() => go(active - 1)} disabled={active === 0}><FiArrowLeft /> Previous</button>
-          <span>{active + 1} / {chapters.length}</span>
-          <button onClick={next}>{active === chapters.length - 1 ? <>Finish <FiCheck /></> : <>Next chapter <FiArrowRight /></>}</button>
-        </div>
+        {chapterBody ? <div className="prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(pages[page]) }} /> : <p className="dropcap">This chapter is still being written.</p>}
+        {chapterBody && <div className="reader-nav">
+          <button onClick={page > 0 ? () => goPage(page - 1) : () => go(active - 1)} disabled={page === 0 && active === 0}><FiArrowLeft /> {page > 0 ? 'Prev page' : 'Prev chapter'}</button>
+          <span>Page {page + 1} / {pages.length}</span>
+          <button onClick={isLastPage ? next : () => goPage(page + 1)}>{isLastPage ? (active === chapters.length - 1 ? <>Finish <FiCheck /></> : <>Next chapter <FiArrowRight /></>) : <>Next page <FiArrowRight /></>}</button>
+        </div>}
       </article>
     </div>
     </> : <article className="reading-column">
