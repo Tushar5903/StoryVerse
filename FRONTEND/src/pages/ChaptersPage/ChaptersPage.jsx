@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { FiArrowLeft, FiArrowRight } from 'react-icons/fi'
 import { getBook, listMyBooks, publishBook } from '../../services/booksApi'
-import { createChapter, deleteChapter, listChapters, updateChapter } from '../../services/chaptersApi'
+import { createChapter, deleteChapter, getChapter, listChapters, updateChapter } from '../../services/chaptersApi'
 import RichTextEditor from '../../components/rich-editor/RichTextEditor'
 import ConfirmModal from '../../components/common/ConfirmModal/ConfirmModal'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
@@ -36,6 +36,10 @@ function ChapterEditor({ bookId }) {
   const [error, setError] = useState('')
   const [pendingDelete, setPendingDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  // The chapter list endpoint is meta-only (the backend never ships chapter bodies
+  // in the list); bodies are fetched on demand when a chapter opens in the editor
+  // and cached here so toggling between chapters stays instant.
+  const [bodies, setBodies] = useState({})
 
   const load = () => Promise.all([getBook(bookId), listChapters(bookId)])
     .then(([currentBook, currentChapters]) => { setBook(currentBook); setChapters(currentChapters) })
@@ -59,7 +63,25 @@ function ChapterEditor({ bookId }) {
   const set = field => event => setForm(current => ({ ...current, [field]: field === 'chapterNumber' ? (Number(event.target.value) || 1) : event.target.value }))
 
   const startNew = () => { setEditingId(null); setForm({ chapterNumber: nextNumber, chapterTitle: '', chapterContent: '' }) }
-  const startEdit = chapter => { setEditingId(chapter.id); setForm({ chapterNumber: chapter.chapterNumber, chapterTitle: chapter.chapterTitle || chapter.title || '', chapterContent: chapter.chapterContent || chapter.content || '' }) }
+  const fetchBody = async chapterId => {
+    const cached = bodies[chapterId]
+    if (cached != null) return cached
+    try {
+      const fetched = await getChapter(bookId, chapterId)
+      const body = fetched.chapterContent || fetched.content || ''
+      setBodies(current => ({ ...current, [chapterId]: body }))
+      return body
+    } catch {
+      return ''
+    }
+  }
+  const startEdit = async chapter => {
+    // Seed the form fully BEFORE switching editingId - the editor remounts (keyed)
+    // and seeds from the initial value, so an empty form would blank the chapter.
+    const body = await fetchBody(chapter.id)
+    setEditingId(chapter.id)
+    setForm({ chapterNumber: chapter.chapterNumber, chapterTitle: chapter.chapterTitle || chapter.title || '', chapterContent: body })
+  }
 
   const save = async event => {
     event.preventDefault()
@@ -69,15 +91,23 @@ function ChapterEditor({ bookId }) {
       return
     }
     try {
+      let savedId = editingId
       if (editingId) await updateChapter(bookId, editingId, form)
-      else await createChapter(bookId, form)
+      else {
+        const created = await createChapter(bookId, form)
+        savedId = created.id
+      }
       toast.success(editingId ? 'Chapter updated.' : 'Chapter saved.')
+      if (savedId) setBodies(current => ({ ...current, [savedId]: form.chapterContent }))
       await load()
       startNew()
     } catch (err) { setError(err.message); toast.error(err.message) }
   }
 
-  const remove = chapter => setPendingDelete(chapter)
+  const remove = chapter => {
+    setPendingDelete(chapter)
+    setBodies(current => { const next = { ...current }; delete next[chapter.id]; return next })
+  }
   const confirmDelete = async () => {
     setDeleting(true)
     setError('')
@@ -106,7 +136,7 @@ function ChapterEditor({ bookId }) {
           <span className="chapter-number">{String(chapter.chapterNumber).padStart(2, '0')}</span>
           <div className="chapter-row-main">
             <strong>{chapter.chapterTitle || chapter.title}</strong>
-            <small>{plainWords(chapter.chapterContent || chapter.content)} words</small>
+            <small>{chapter.wordCount != null ? `${chapter.wordCount} words` : `${plainWords(chapter.chapterContent || chapter.content)} words`}</small>
           </div>
           <div className="chapter-row-actions">
             <button onClick={() => startEdit(chapter)}>Edit</button>

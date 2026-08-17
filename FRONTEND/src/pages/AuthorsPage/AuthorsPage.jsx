@@ -57,14 +57,14 @@ export default function AuthorsPage() {
         </div>
         {state.loading ? <AuthorSkeleton />
           : state.error ? <div className="ap-empty"><div className="eyebrow">THE DIRECTORY IS DARK</div><h2>Authors unavailable.</h2><p>{state.error}</p></div>
-          : filtered.length ? <div className="ap-row-outer">
-            <div className="ap-row" ref={ref} tabIndex={0} aria-label="All authors">
-              {filtered.map(author => <AuthorItem key={author.id} author={author} />)}
+            : filtered.length ? <div className="ap-row-outer">
+              <div className="ap-row" ref={ref} tabIndex={0} aria-label="All authors">
+                {filtered.map(author => <AuthorItem key={author.id} author={author} />)}
+              </div>
+              {canPrev && <div className="ap-fade ap-fade--left" aria-hidden="true" />}
+              {canNext && <div className="ap-fade ap-fade--right" aria-hidden="true" />}
             </div>
-            {canPrev && <div className="ap-fade ap-fade--left" aria-hidden="true" />}
-            {canNext && <div className="ap-fade ap-fade--right" aria-hidden="true" />}
-          </div>
-          : <div className="ap-empty"><div className="eyebrow">THE SEARCH CAME UP EMPTY</div><h2>No authors found.</h2><p>{query ? 'Try a different name — every voice in the archive is indexed.' : 'The first voice could be yours.'}</p></div>}
+              : <div className="ap-empty"><div className="eyebrow">THE SEARCH CAME UP EMPTY</div><h2>No authors found.</h2><p>{query ? 'Try a different name — every voice in the archive is indexed.' : 'The first voice could be yours.'}</p></div>}
       </section>
     </main>
     <Footer />

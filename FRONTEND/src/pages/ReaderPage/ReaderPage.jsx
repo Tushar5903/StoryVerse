@@ -1,17 +1,26 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { FiArrowLeft, FiArrowRight, FiBookOpen, FiChevronDown, FiMoon, FiSun } from 'react-icons/fi'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { FiArrowLeft, FiArrowRight, FiBookOpen, FiCheck, FiChevronDown, FiMoon, FiSun } from 'react-icons/fi'
+import DOMPurify from 'dompurify'
 import { getBook } from '../../services/booksApi'
-import { listChapters } from '../../services/chaptersApi'
+import { getChapter, listChapters } from '../../services/chaptersApi'
 import { getBookProgress, markRead, unmarkRead } from '../../services/progressApi'
+import CompletionModal from '../../components/common/CompletionModal/CompletionModal'
 import './ReaderPage.css'
 
 const looksLikeHtml = value => /<\/?[a-z][\s\S]*>/i.test(String(value || '').trim())
+// Defense-in-depth: never trust the regex heuristic alone - sanitize on the read path with
+// the same allowlist the backend applies at write time.
+const sanitizeHtml = value => DOMPurify.sanitize(value, {
+  ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'br', 'em', 'strong', 'u', 's', 'del', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'sup', 'sub'],
+  ALLOWED_ATTR: ['href', 'title'],
+})
 const renderContent = value => looksLikeHtml(value)
-  ? <div className="prose" dangerouslySetInnerHTML={{ __html: value }} />
+  ? <div className="prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }} />
   : <div className="prose">{String(value).split('\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
 
 export default function ReaderPage() {
+  const navigate = useNavigate()
   const [params] = useSearchParams()
   const bookId = params.get('bookId')
   const [book, setBook] = useState(null)
@@ -21,37 +30,80 @@ export default function ReaderPage() {
   const [readMap, setReadMap] = useState({})
   const [error, setError] = useState('')
   const [chaptersOpen, setChaptersOpen] = useState(false)
+  const [bodies, setBodies] = useState({})
+  const [showComplete, setShowComplete] = useState(false)
 
   useEffect(() => {
     if (!bookId) return
+    const progressRequest = localStorage.getItem('sv_token')
+      ? getBookProgress(bookId).catch(() => [])
+      : Promise.resolve([])
+    let cancelled = false
     Promise.all([
       getBook(bookId),
       listChapters(bookId),
-      getBookProgress(bookId).catch(() => [])
+      progressRequest
     ])
       .then(([currentBook, currentChapters, progress]) => {
+        if (cancelled) return
         setBook(currentBook)
         setChapters(currentChapters)
         setActive(0)
+        setBodies({})
         setReadMap(Object.fromEntries(progress.map(item => [item.chapterId, item.markedAt])))
       })
-      .catch(err => setError(err.message))
+      .catch(err => { if (!cancelled) setError(err.message) })
+    return () => { cancelled = true }
   }, [bookId])
 
   const chapter = chapters[active]
+  const chapterBody = chapter ? (chapter.chapterContent || chapter.content || bodies[chapter.id]) : null
+  useEffect(() => {
+    if (!chapter) return
+    const inline = chapter.chapterContent || chapter.content
+    if (inline || bodies[chapter.id]) return
+    getChapter(bookId, chapter.id)
+      .then(fetched => {
+        const body = fetched.chapterContent || fetched.content || ''
+        setBodies(current => {
+          if (current[chapter.id] !== undefined) return current
+          return { ...current, [chapter.id]: body }
+        })
+      })
+      .catch(() => {})
+    const nextChapter = chapters[active + 1]
+    if (nextChapter && !bodies[nextChapter.id] && !(nextChapter.chapterContent || nextChapter.content)) {
+      getChapter(bookId, nextChapter.id)
+        .then(fetched => {
+          const body = fetched.chapterContent || fetched.content || ''
+          setBodies(current => (current[nextChapter.id] !== undefined ? current : { ...current, [nextChapter.id]: body }))
+        })
+        .catch(() => {})
+    }
+  }, [active, chapters, bodies, bookId, chapter])
+
   const go = index => { if (index >= 0 && index < chapters.length) setActive(index) }
   const toggleRead = id => {
     const marked = !!readMap[id]
+    const previous = readMap[id]
     setReadMap(map => ({ ...map, [id]: marked ? null : new Date().toISOString() }))
-    if (marked) unmarkRead(id).catch(() => {})
-    else markRead(bookId, id).catch(() => {})
+    const rollback = () => setReadMap(map => ({ ...map, [id]: previous }))
+    if (marked) unmarkRead(id).catch(rollback)
+    else {
+      markRead(bookId, id).catch(rollback)
+      if (id === chapters[chapters.length - 1]?.id) setShowComplete(true)
+    }
   }
   const next = () => {
-    if (active >= chapters.length - 1) return
     const id = chapters[active].id
     if (!readMap[id]) {
+      const previous = readMap[id]
       setReadMap(map => ({ ...map, [id]: new Date().toISOString() }))
-      markRead(bookId, id).catch(() => {})
+      markRead(bookId, id).catch(() => setReadMap(map => ({ ...map, [id]: previous })))
+    }
+    if (active >= chapters.length - 1) {
+      setShowComplete(true)
+      return
     }
     setActive(active + 1)
   }
@@ -84,11 +136,11 @@ export default function ReaderPage() {
       <article className="reading-column">
         <div className="eyebrow">{book?.genre || 'MANUSCRIPT'} · PART ONE</div>
         <h1>{chapter.chapterTitle || chapter.title}</h1>
-        {chapter.chapterContent || chapter.content ? renderContent(chapter.chapterContent || chapter.content) : <p className="dropcap">This chapter is still being written.</p>}
+        {chapterBody ? renderContent(chapterBody) : <p className="dropcap">This chapter is still being written.</p>}
         <div className="reader-nav">
           <button onClick={() => go(active - 1)} disabled={active === 0}><FiArrowLeft /> Previous</button>
           <span>{active + 1} / {chapters.length}</span>
-          <button onClick={next} disabled={active === chapters.length - 1}>Next chapter <FiArrowRight /></button>
+          <button onClick={next}>{active === chapters.length - 1 ? <>Finish <FiCheck /></> : <>Next chapter <FiArrowRight /></>}</button>
         </div>
       </article>
     </div>
@@ -98,5 +150,10 @@ export default function ReaderPage() {
       <p className="dropcap">There is a particular silence that arrives just before a story begins. It is not empty. It is an invitation — a held breath, a page turned in the dark.</p>
       <p>This manuscript has not published its chapters yet. Check back soon, or explore the rest of the archive.</p>
     </article>}
+    {showComplete && <CompletionModal
+      bookTitle={book?.title}
+      onExplore={() => navigate('/explore')}
+      onCancel={() => setShowComplete(false)}
+    />}
   </div>
 }

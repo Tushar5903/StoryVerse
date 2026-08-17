@@ -50,8 +50,10 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final CloudinaryService cloudinaryService;
     private final long otpTtlSeconds;
+    private final long refreshDays;
+    private final String dummyPasswordHash;
 
-    public AuthServiceImpl(UserRepository users, AuthorRepository authors, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, OtpCodeRepository otpCodes, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService, @Value("${app.security.otp.ttl-seconds:300}") long otpTtlSeconds) {
+    public AuthServiceImpl(UserRepository users, AuthorRepository authors, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, OtpCodeRepository otpCodes, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService, @Value("${app.security.otp.ttl-seconds:300}") long otpTtlSeconds, @Value("${app.security.jwt.refresh-days:2}") long refreshDays) {
         this.users = users;
         this.authors = authors;
         this.refreshTokens = refreshTokens;
@@ -62,6 +64,11 @@ public class AuthServiceImpl implements AuthService {
         this.emailService = emailService;
         this.cloudinaryService = cloudinaryService;
         this.otpTtlSeconds = otpTtlSeconds;
+        this.refreshDays = refreshDays;
+        // Pre-computed at startup so login() can run a BCrypt compare even when the
+        // account doesn't exist - otherwise the missing-user path is visibly faster
+        // and leaks whether an email is registered (timing side channel).
+        this.dummyPasswordHash = passwordEncoder.encode("storyverse-timing-equalizer");
     }
 
     public MessageResponse sendRegistrationOtp(RegisterRequest request) {
@@ -82,7 +89,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public AuthResponse verifyRegistration(VerifyRegistrationRequest request) {
-        assertEmailAndUsernameAvailable(request.email(), request.username());
+        // Validate the OTP FIRST: with a random/bad code, registered and unregistered
+        // emails now return the identical 400, so this endpoint can't be used to probe
+        // whether an email exists (the old order leaked a 409 for registered emails
+        // before the code was ever checked). The availability check below only runs
+        // after a genuine code, which only the email owner can produce.
         OtpCode otp = otpCodes.findFirstByEmailIgnoreCaseAndCodeOrderByCreatedAtDesc(request.email(), request.otp())
                 .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Invalid verification code"));
         if (otp.isUsed()) {
@@ -91,6 +102,7 @@ public class AuthServiceImpl implements AuthService {
         if (otp.getExpiresAt().isBefore(Instant.now())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Verification code has expired. Request a new one");
         }
+        assertEmailAndUsernameAvailable(request.email(), request.username());
         if (otpCodes.markUsed(otp.getId()) == 0) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Verification code already used");
         }
@@ -108,17 +120,20 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void assertEmailAndUsernameAvailable(String email, String username) {
-        if (users.existsByEmailIgnoreCase(email)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Email is already registered");
-        }
-        if (users.existsByUsernameIgnoreCase(username)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Username is already taken");
+        if (users.existsByEmailIgnoreCase(email) || users.existsByUsernameIgnoreCase(username)) {
+            throw new ApiException(HttpStatus.CONFLICT, "Email or username is already in use");
         }
     }
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = users.findByEmailIgnoreCase(request.email()).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+        User user = users.findByEmailIgnoreCase(request.email()).orElse(null);
+        if (user == null) {
+            // Equalize timing with the BCrypt compare below so missing accounts are not
+            // distinguishable by response time, then fail with the same generic message.
+            passwordEncoder.matches(request.password(), dummyPasswordHash);
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         if (!user.isEnabled()) throw new ApiException(HttpStatus.FORBIDDEN, "User account is disabled");
         if (user.isBanned()) throw new ApiException(HttpStatus.FORBIDDEN, "User account is banned");
@@ -170,6 +185,9 @@ public class AuthServiceImpl implements AuthService {
         if (token.isUsed() || token.getExpiresAt().isBefore(Instant.now())) throw new ApiException(HttpStatus.BAD_REQUEST, "Reset token is expired or used");
         token.getUser().setPasswordHash(passwordEncoder.encode(request.newPassword()));
         token.setUsed(true);
+        // A password change must invalidate every outstanding session - otherwise a
+        // previously stolen refresh token keeps working long after the reset.
+        refreshTokens.revokeAllForUser(token.getUser().getId());
     }
 
     public void logout(LogoutRequest request, Long userId) {
@@ -181,6 +199,7 @@ public class AuthServiceImpl implements AuthService {
         token.setRevoked(true);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = "publicProfiles", allEntries = true)
     public UserResponse updateProfile(Long userId, String name, String bio, String dateOfBirth, String instagram, String twitter, String youtube, MultipartFile image) {
         User user = users.findById(userId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         if (name != null && !name.isBlank()) {
@@ -205,17 +224,30 @@ public class AuthServiceImpl implements AuthService {
                 user.setDateOfBirth(parsed);
             }
         }
-        user.setInstagram(blankToNull(instagram));
-        user.setTwitter(blankToNull(twitter));
-        user.setYoutube(blankToNull(youtube));
+        user.setInstagram(validateSocial(instagram, "Instagram"));
+        user.setTwitter(validateSocial(twitter, "Twitter"));
+        user.setYoutube(validateSocial(youtube, "YouTube"));
         if (image != null && !image.isEmpty()) {
             user.setProfileImage(cloudinaryService.uploadProfileImage(image));
         }
         return toUserResponse(user);
     }
 
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
+    private static final java.util.regex.Pattern SOCIAL_HANDLE = java.util.regex.Pattern.compile("^[A-Za-z0-9_.\\-/]{1,100}$");
+    private static final java.util.regex.Pattern SOCIAL_URL = java.util.regex.Pattern.compile("^https?://[A-Za-z0-9_.\\-/:@?&=+~#%]{1,500}$");
+
+    private String validateSocial(String value, String label) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String trimmed = value.trim();
+        // Accept a plain handle (the frontend prefixes https://instagram.com/ etc.) or a
+        // full http(s) URL - but never javascript:/data:/control characters.
+        if (!SOCIAL_HANDLE.matcher(trimmed).matches() && !SOCIAL_URL.matcher(trimmed).matches()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    label + " must be a plain handle or an http(s) URL");
+        }
+        return trimmed;
     }
 
     @Transactional(readOnly = true)
@@ -225,6 +257,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "publicProfiles", key = "#identifier")
     public PublicUserResponse getPublicProfile(String identifier) {
         Optional<User> byId = Optional.empty();
         try {
@@ -249,7 +282,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken token = new RefreshToken();
         token.setToken(secureToken());
         token.setUser(user);
-        token.setExpiresAt(Instant.now().plusSeconds(7 * 86400));
+        token.setExpiresAt(Instant.now().plusSeconds(refreshDays * 86400));
         return refreshTokens.save(token).getToken();
     }
 

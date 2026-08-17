@@ -1,1 +1,15 @@
-:root { --sv-bg:#000000; --sv-panel:#15131a; --sv-panel-2:#1b1822; --sv-line:#302b38; --sv-muted:#958d9b; --sv-cream:#f4efe6; --sv-violet:#a98bd8; --sv-coral:#e87e72; --sv-amber:#e4aa63; --sv-teal:#71c3ad; --sv-serif:'Playfair Display',serif; --sv-sans:'DM Sans',sans-serif; --sv-mono:'DM Mono',monospace; }
+:root {
+    --sv-bg: #000000;
+    --sv-panel: #15131a;
+    --sv-panel-2: #1b1822;
+    --sv-line: #302b38;
+    --sv-muted: #958d9b;
+    --sv-cream: #f4efe6;
+    --sv-violet: #a98bd8;
+    --sv-coral: #e87e72;
+    --sv-amber: #e4aa63;
+    --sv-teal: #71c3ad;
+    --sv-serif: 'Playfair Display', serif;
+    --sv-sans: 'DM Sans', sans-serif;
+    --sv-mono: 'DM Mono', monospace;
+}

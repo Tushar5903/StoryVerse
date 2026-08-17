@@ -64,19 +64,23 @@ export default function WriterDashboardPage() {
         {loading ? <div className="writer-empty">Loading your archive…</div>
           : !books.length ? <div className="writer-empty"><strong>Your shelf is empty.</strong><p>Create a manuscript to begin publishing.</p><Link className="button" to="/books/new">Start writing <FiArrowUpRight /></Link></div>
             : <div className="writer-list">{books.map(book => <div className="writer-row" key={book.id}>
-                <Link className="writer-cover" to={`/books/${book.id}/edit`}>{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</Link>
-                <div className="writer-row-main">
-                  <h3><Link to={`/books/${book.id}/edit`}>{book.title}</Link></h3>
-                  <p>{book.genre ? <span className="writer-genre">{book.genre}</span> : null}{book.language || 'Story'} · {book.bookType === 'REVIEW_BOOK' ? 'Review book' : 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : 'No year yet'}</p>
-                  <div className="writer-actions">
-                    <Link to={`/books/${book.id}/edit`}>Edit details</Link>
-                    {book.bookType !== 'REVIEW_BOOK' && <Link to={`/write?bookId=${book.id}`}>Chapters</Link>}
-                    {!book.published && <button onClick={() => onPublish(book.id)}>Publish</button>}
-                    <button className="danger" onClick={() => onDelete(book)}>Delete</button>
-                  </div>
+              <Link className="writer-cover" to={`/books/${book.id}/edit`}>{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</Link>
+              <div className="writer-row-main">
+                <h3><Link to={`/books/${book.id}/edit`}>{book.title}</Link></h3>
+                <p>{book.genre ?
+                  <span className="writer-genre">{book.genre}</span>
+                  : null}
+                  {book.language || 'Story'} · {book.bookType === 'REVIEW_BOOK' ? 'Review book' : 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : 'No year yet'}
+                </p>
+                <div className="writer-actions">
+                  <Link to={`/books/${book.id}/edit`}>Edit details</Link>
+                  {book.bookType !== 'REVIEW_BOOK' && <Link to={`/write?bookId=${book.id}`}>Chapters</Link>}
+                  {!book.published && <button onClick={() => onPublish(book.id)}>Publish</button>}
+                  <button className="danger" onClick={() => onDelete(book)}>Delete</button>
                 </div>
-                <span className={`writer-status ${book.published ? 'published' : 'draft'}`}>{book.published ? 'Published' : 'Draft'}</span>
-              </div>)}
+              </div>
+              <span className={`writer-status ${book.published ? 'published' : 'draft'}`}>{book.published ? 'Published' : 'Draft'}</span>
+            </div>)}
             </div>}
       </section>
       <p className="writer-account">Publishing as <strong>@{user?.username || 'writer'}</strong> — your author profile updates automatically.</p>

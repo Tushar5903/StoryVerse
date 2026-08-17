@@ -6,6 +6,7 @@ import com.storyreview.dto.response.ApiResponses.ReviewResponse;
 import com.storyreview.enums.ReviewVerdict;
 import com.storyreview.security.CurrentUser;
 import com.storyreview.service.ReviewService;
+import com.storyreview.util.SortSanitizer;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,9 +15,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
+    private static final Set<String> REVIEW_SORTABLE = Set.of("createdAt", "updatedAt", "verdict");
     private final ReviewService reviewService;
 
     public ReviewController(ReviewService reviewService) {
@@ -47,7 +51,14 @@ public class ReviewController {
 
     @GetMapping("/mine")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    Page<ReviewResponse> getMine(@AuthenticationPrincipal CurrentUser user, Pageable pageable) {
+    Object getMine(@AuthenticationPrincipal CurrentUser user,
+                   @RequestParam(required = false) Long bookId, Pageable pageable) {
+        // ?bookId= is the single "Your Review" lookup used by the book page - it must find
+        // the review even when it sits beyond the first page of the regular review list.
+        if (bookId != null) {
+            return reviewService.getMineForBook(user.id(), bookId);
+        }
+        pageable = SortSanitizer.allow(pageable, REVIEW_SORTABLE);
         return reviewService.getByUserId(user.id(), pageable);
     }
 
@@ -62,6 +73,7 @@ public class ReviewController {
                                          @RequestParam(required = false) Long userId,
                                          @RequestParam(required = false) ReviewVerdict verdict,
                                          @AuthenticationPrincipal CurrentUser user, Pageable pageable) {
+        pageable = SortSanitizer.allow(pageable, REVIEW_SORTABLE);
         if (userId != null) {
             return reviewService.getByUserIdPublic(userId, pageable);
         }

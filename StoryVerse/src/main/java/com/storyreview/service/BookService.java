@@ -5,11 +5,14 @@ import com.storyreview.dto.request.BookRequests.CreateDraftBookRequest;
 import com.storyreview.dto.request.BookRequests.CreateReviewBookRequest;
 import com.storyreview.dto.request.BookRequests.UpdateBookRequest;
 import com.storyreview.dto.response.ApiResponses.BookResponse;
+import com.storyreview.dto.response.ApiResponses.LeaderboardEntry;
 import com.storyreview.enums.BookType;
 import com.storyreview.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 public interface BookService {
     BookResponse createReviewBook(CreateReviewBookRequest request, Long adminId);
@@ -25,4 +28,5 @@ public interface BookService {
     BookResponse getById(Long id, Long requesterId, Role requesterRole);
     Page<BookResponse> search(String query, Long authorId, String genre, BookType bookType, Pageable pageable);
     Page<BookResponse> getMine(Long userId, Pageable pageable);
+    List<LeaderboardEntry> leaderboard(int limit);
 }

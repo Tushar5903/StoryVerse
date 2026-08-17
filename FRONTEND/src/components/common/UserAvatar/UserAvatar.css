@@ -1,1 +1,15 @@
-.user-avatar{border-radius:50%;object-fit:cover;border:1px solid var(--sv-violet);flex:0 0 auto}.user-avatar-fallback{background:linear-gradient(145deg,#2e2138,#836e9d);display:grid;place-items:center;color:var(--sv-cream);font-family:var(--sv-serif);line-height:1}
+.user-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--sv-violet);
+    flex: 0 0 auto
+}
+
+.user-avatar-fallback {
+    background: linear-gradient(145deg, #2e2138, #836e9d);
+    display: grid;
+    place-items: center;
+    color: var(--sv-cream);
+    font-family: var(--sv-serif);
+    line-height: 1
+}

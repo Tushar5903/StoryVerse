@@ -106,7 +106,15 @@ public class ChapterServiceImpl implements ChapterService {
     public List<ChapterResponse> getByBookId(Long bookId, Long requesterId, Role requesterRole) {
         Book book = findBook(bookId);
         assertReadable(book, requesterId, requesterRole);
-        return chapters.findByBookIdOrderByChapterNumberAsc(bookId).stream().map(this::toResponse).toList();
+        // The chapter list is a meta-only table of contents for EVERYONE (id/number/title).
+        // The writer studio fetches a chapter's body on demand (GET .../chapters/{id}) when
+        // it is opened in the editor, so a long book never ships megabytes of content in the
+        // list response. Owners/admins additionally get word counts for the studio rows.
+        boolean details = requesterRole == Role.ADMIN
+                || (requesterId != null && book.getCreatedBy().getId().equals(requesterId));
+        return chapters.findByBookIdOrderByChapterNumberAsc(bookId).stream()
+                .map(chapter -> toResponse(chapter, details))
+                .toList();
     }
 
     /**
@@ -164,7 +172,24 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     private ChapterResponse toResponse(Chapter chapter) {
+        return toResponse(chapter, true);
+    }
+
+    private static final java.util.regex.Pattern TAG_STRIP = java.util.regex.Pattern.compile("<[^>]*>");
+
+    private static Long plainWordsOf(String html) {
+        if (html == null || html.isBlank()) {
+            return 0L;
+        }
+        String text = TAG_STRIP.matcher(html).replaceAll(" ").trim();
+        return text.isEmpty() ? 0L : (long) text.split("\\s+").length;
+    }
+
+    private ChapterResponse toResponse(Chapter chapter, boolean includeDetails) {
+        String content = includeDetails ? chapter.getChapterContent() : null;
+        Long wordCount = includeDetails ? plainWordsOf(chapter.getChapterContent()) : null;
         return new ChapterResponse(chapter.getId(), chapter.getBook().getId(), chapter.getChapterNumber(),
-                chapter.getChapterTitle(), chapter.getChapterContent(), chapter.getCreatedAt(), chapter.getUpdatedAt());
+                chapter.getChapterTitle(), content, wordCount,
+                chapter.getCreatedAt(), chapter.getUpdatedAt());
     }
 }

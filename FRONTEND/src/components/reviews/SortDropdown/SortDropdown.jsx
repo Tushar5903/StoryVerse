@@ -32,7 +32,7 @@ export default function SortDropdown({ value, onChange, options = REVIEW_SORTS, 
     const index = Math.max(0, options.findIndex(([key]) => key === value))
     setFocusIndex(index)
     menuRef.current.querySelectorAll('[role="option"]')[index]?.focus()
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open])
 
   const toggle = () => {
     if (open) { setOpen(false); return }
@@ -51,7 +51,11 @@ export default function SortDropdown({ value, onChange, options = REVIEW_SORTS, 
   return (
     <div className={`sort-dropdown ${variant}${open && openUp ? ' open-up' : ''}`} ref={rootRef}>
       <button type="button" className="sort-trigger" aria-haspopup="listbox" aria-expanded={open} onClick={toggle}>
-        <span>{prefix && <span className="sort-prefix">{prefix}</span>}<b>{current[1]}</b></span><FiChevronDown size={15} className={open ? 'open' : ''} />
+        <span>
+          {prefix && <span className="sort-prefix">{prefix}</span>}
+          <b>{current[1]}</b>
+        </span>
+        <FiChevronDown size={15} className={open ? 'open' : ''} />
       </button>
       {open && <div className="sort-menu" role="listbox" aria-label="Sort options" onKeyDown={onMenuKey} ref={menuRef}>
         {options.map(([key, label], index) => (

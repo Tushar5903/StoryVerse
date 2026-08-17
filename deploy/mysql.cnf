@@ -1,0 +1,31 @@
+# StoryVerse - reference MySQL tuning (adjust to the actual server RAM).
+# Put these under [mysqld] in /etc/mysql/mysql.conf.d/99-storyverse.cnf (Debian/Ubuntu)
+# and restart MySQL. Values assume a ~2 GB RAM VPS; scale buffer pool with RAM.
+
+[mysqld]
+
+# --- InnoDB buffer pool: 50-70% of available RAM is the usual sweet spot ---
+# 2 GB VPS  -> 1G | 4 GB -> 2G | 8 GB -> 5G
+innodb_buffer_pool_size = 1G
+innodb_buffer_pool_instances = 2        # 1 instance per ~1G of pool
+
+# --- The catalog FULLTEXT index (V11, ft_books_search) skips words shorter than ---
+# --- this by default, which makes 1-2 letter queries fall back to LIKE. Lower it. ---
+# NOTE: changing this requires rebuilding the FULLTEXT index:
+#   ALTER TABLE books DROP INDEX ft_books_search;
+#   ALTER TABLE books ADD FULLTEXT INDEX ft_books_search (title, subtitle, description);
+#   (the app falls back to LIKE automatically, so a rebuild can be done any time)
+innodb_ft_min_token_size = 3
+
+# --- Connection/thread basics for a single-app workload ---
+max_connections = 150
+thread_cache_size = 16
+
+# --- Slow query log: keep this ON in production, monitor /var/log/mysql/mysql-slow.log ---
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/mysql-slow.log
+long_query_time = 1
+
+# --- Batch-friendly writes (nightly OTP/purge jobs) ---
+innodb_flush_log_at_trx_commit = 1      # keep 1 for durability; 2 trades a little
+                                        # durability for ~2x write throughput

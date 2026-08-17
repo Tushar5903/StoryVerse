@@ -39,6 +39,11 @@ public class InMemoryRateLimitService implements RateLimitService {
         }
     }
 
+    @Override
+    public void reset(String key) {
+        buckets.remove(key);
+    }
+
     private void purge(long now) {
         buckets.entrySet().removeIf(e -> now - e.getValue().windowStart() > PURGE_OLDER_THAN_MILLIS);
     }

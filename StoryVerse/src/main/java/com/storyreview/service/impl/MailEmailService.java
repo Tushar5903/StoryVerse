@@ -5,6 +5,7 @@ import com.storyreview.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +20,9 @@ public class MailEmailService implements EmailService {
         this.baseUrl = baseUrl;
     }
 
+    // Async so the SMTP round-trip never blocks the request thread. Callers already
+    // swallow failures, so a slow/broken mail server can't fail registrations.
+    @Async("mailExecutor")
     public void sendPasswordResetEmail(User user, String token) {
         String link = baseUrl + "/reset-password?token=" + token;
         send(user.getEmail(), "Reset your StoryVerse password",
@@ -28,6 +32,7 @@ public class MailEmailService implements EmailService {
                         + "\n\nIf you didn't request this, you can safely ignore this email.");
     }
 
+    @Async("mailExecutor")
     public void sendOtpEmail(String email, String code) {
         send(email, "Your StoryVerse verification code", "Your verification code is " + code + ". It expires in 5 minutes.");
     }

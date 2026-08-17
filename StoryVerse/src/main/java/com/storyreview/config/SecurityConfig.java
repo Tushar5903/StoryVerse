@@ -28,6 +28,8 @@ import java.util.List;
 public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:5173}")
     private String allowedOrigins;
+    @Value("${app.security.swagger-enabled:true}")
+    private boolean swaggerEnabled;
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
                                             RestAuthenticationEntryPoint authenticationEntryPoint,
@@ -39,12 +41,24 @@ public class SecurityConfig {
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**",
-                                "/swagger-ui.html", "/actuator/health", "/actuator/health/**").permitAll()
+                .authorizeHttpRequests(auth -> {
+                    // Swagger/OpenAPI are dev aids; disable in production via
+                    // app.security.swagger-enabled=false so the API surface stays private.
+                    if (swaggerEnabled) {
+                        auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                    }
+                    auth
+                        .requestMatchers("/api/auth/**", "/actuator/health", "/actuator/health/**").permitAll()
+                        // Rules below are evaluated in order; private/authenticated endpoints must
+                        // come BEFORE the blanket public GET patterns, or /api/books/mine and
+                        // /api/users/me would match them (method security is not a substitute).
+                        .requestMatchers(HttpMethod.GET, "/api/books/mine", "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/authors", "/api/authors/**", "/api/books", "/api/books/*", "/api/users/*", "/api/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/books/*/chapters", "/api/books/*/chapters/*", "/api/reviews").permitAll()
-                        .anyRequest().authenticated())
+                        // Actuator metrics/info are internal; only admins may read them.
+                        .requestMatchers("/actuator/metrics/**", "/actuator/info/**").hasRole("ADMIN")
+                        .anyRequest().authenticated();
+                })
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

@@ -17,4 +17,10 @@ public interface ReviewService {
     Page<ReviewResponse> getByUserId(Long userId, Pageable pageable);
     Page<ReviewResponse> getByUserIdPublic(Long userId, Pageable pageable);
     Page<ReviewResponse> getFeed(Pageable pageable);
+
+    /**
+     * The current user's review for one book, or 404. The book page uses this to show the
+     * "Your Review" card even when the review sits beyond the first page of reviews.
+     */
+    ReviewResponse getMineForBook(Long userId, Long bookId);
 }

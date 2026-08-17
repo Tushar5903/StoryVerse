@@ -54,7 +54,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<ApiError> duplicate(DataIntegrityViolationException ex, HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "Duplicate record violates a unique constraint", request);
+        // A unique-constraint violation (e.g. duplicate book title+author) is a 409; a
+        // referential-integrity violation (e.g. deleting a book that still has reviews or
+        // progress rows) is a client error, not a duplicate - return 400 with a clear message.
+        String message = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : "";
+        if (message.contains("Duplicate") || message.contains("unique") || message.contains("Duplicate entry")) {
+            return build(HttpStatus.CONFLICT, "Duplicate record violates a unique constraint", request);
+        }
+        if (message.contains("foreign key") || message.contains("Cannot delete or update a parent row")) {
+            return build(HttpStatus.BAD_REQUEST,
+                    "This record is still referenced by other data and cannot be deleted", request);
+        }
+        log.warn("Unexpected data integrity violation", ex);
+        return build(HttpStatus.BAD_REQUEST, "The request conflicts with existing data", request);
     }
 
     @ExceptionHandler({MultipartException.class})
@@ -69,7 +81,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ApiError> illegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, ex.getMessage() != null ? ex.getMessage() : "Invalid request", request);
+        // Never echo raw exception text to clients - it may contain internals.
+        log.warn("Bad request argument", ex);
+        return build(HttpStatus.BAD_REQUEST, "Invalid request", request);
+    }
+
+    // Malformed JSON body / wrong types are client errors (400), not server errors (500).
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    ResponseEntity<ApiError> unreadable(org.springframework.http.converter.HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Malformed request body", request);
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ApiError> typeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Invalid request parameter", request);
     }
 
     @ExceptionHandler(IllegalStateException.class)

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FiAward, FiArrowLeft, FiArrowRight, FiBookOpen, FiTrendingUp, FiUsers } from 'react-icons/fi'
-import { listBooks } from '../../services/booksApi'
-import { listReviews } from '../../services/reviewsApi'
+import { getLeaderboard, listBooks } from '../../services/booksApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
 import BookCard, { SkeletonGrid } from '../../components/common/BookCard/BookCard'
@@ -25,22 +24,28 @@ const VIEWS = {
   talk: { title: 'Talk Of The Town', params: 'sort=createdAt,desc' },
   users: { title: "User's Books", params: 'type=USER_BOOK' },
   review: { title: 'Books For Review', params: 'type=REVIEW_BOOK' },
-  famous: { title: 'Most Famous Books', params: 'sort=createdAt,desc', rank: true },
+  famous: { title: 'Most Famous Books', rank: true },
 }
 
 // Resolves one paginated batch (page, size) into display items. The backend page
 // metadata (content / last / totalPages) flows through untouched so the hook can
 // decide whether more batches exist — the database only ever returns `size` rows.
 const fetchViewPage = (view, page, size, signal) => {
+  if (view.rank) {
+    // Most Famous reuses the aggregate leaderboard endpoint (exact per-verdict
+    // counts in one request) instead of firing a listReviews call per book.
+    return getLeaderboard(`?limit=${size}`, { signal }).then(entries => {
+      const content = (entries || [])
+        .map(entry => ({ book: entry.book, count: entry.votes ?? 0 }))
+        .sort((a, b) => b.count - a.count || new Date(b.book.createdAt) - new Date(a.book.createdAt))
+      return { content, last: true, totalPages: 1, totalElements: content.length }
+    })
+  }
   const params = view.params ? `&${view.params}` : ''
-  return listBooks(`?size=${size}&page=${page}${params}`, { signal }).then(pageData => {
-    const content = (pageData.content || []).map(book => ({ book }))
-    if (!view.rank) return { ...pageData, content }
-    return Promise.all(content.map(({ book }) => listReviews(book.id, '&size=200')
-      .then(p => ({ book, count: (p?.content || []).length }))
-      .catch(() => ({ book, count: 0 }))))
-      .then(ranked => ({ ...pageData, content: ranked.sort((a, b) => b.count - a.count || new Date(b.book.createdAt) - new Date(a.book.createdAt)) }))
-  })
+  return listBooks(`?size=${size}&page=${page}${params}`, { signal }).then(pageData => ({
+    ...pageData,
+    content: (pageData.content || []).map(book => ({ book })),
+  }))
 }
 
 function Section({ title, subtitle, icon, state, view }) {
@@ -94,20 +99,18 @@ function ExploreContent({ initialGenre = '' }) {
       settle(listBooks('?size=8&sort=createdAt,desc')),
       settle(listBooks('?size=20&type=USER_BOOK')),
       settle(listBooks('?size=20&type=REVIEW_BOOK')),
-      settle(listBooks('?size=20&sort=createdAt,desc')),
+      // Most Famous: ONE aggregate request (exact verdict counts from the leaderboard
+      // endpoint) instead of a listReviews count call per book.
+      getLeaderboard('?limit=20').then(entries => (entries || []).map(entry => ({ book: entry.book, count: entry.votes ?? 0 }))).catch(() => []),
     ]).then(([talk, users, review, famousPool]) => {
       if (!active) return
-      Promise.all(famousPool.map(book => listReviews(book.id, '&size=200').then(page => ({ book, count: (page?.content || []).length })).catch(() => ({ book, count: 0 }))))
-        .then(famous => {
-          if (!active) return
-          const topFamous = famous.sort((a, b) => b.count - a.count || new Date(b.book.createdAt) - new Date(a.book.createdAt)).slice(0, 8)
-          setSections({
-            talk: { books: talk.slice(0, 8).map(book => ({ book })), loading: false },
-            users: { books: pickRandom(users).map(book => ({ book })), loading: false },
-            review: { books: pickRandom(review).map(book => ({ book })), loading: false },
-            famous: { books: topFamous, loading: false },
-          })
-        })
+      const topFamous = famousPool.sort((a, b) => b.count - a.count || new Date(b.book.createdAt) - new Date(a.book.createdAt)).slice(0, 8)
+      setSections({
+        talk: { books: talk.slice(0, 8).map(book => ({ book })), loading: false },
+        users: { books: pickRandom(users).map(book => ({ book })), loading: false },
+        review: { books: pickRandom(review).map(book => ({ book })), loading: false },
+        famous: { books: topFamous, loading: false },
+      })
     })
     return () => { active = false }
   }, [])

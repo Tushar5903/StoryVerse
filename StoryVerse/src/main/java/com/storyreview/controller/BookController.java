@@ -6,20 +6,28 @@ import com.storyreview.dto.request.BookRequests.CreateReviewBookRequest;
 import com.storyreview.dto.request.BookRequests.UpdateBookRequest;
 import com.storyreview.dto.response.ApiResponses.BookResponse;
 import com.storyreview.dto.response.ApiResponses.GenresResponse;
+import com.storyreview.dto.response.ApiResponses.LeaderboardEntry;
 import com.storyreview.enums.BookGenre;
 import com.storyreview.enums.BookType;
 import com.storyreview.security.CurrentUser;
 import com.storyreview.service.BookService;
+import com.storyreview.util.SortSanitizer;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Set;
+
+@Validated
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
@@ -31,11 +39,12 @@ public class BookController {
 
     @GetMapping
     Page<BookResponse> search(
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @Size(max = 200) String q,
             @RequestParam(required = false) Long authorId,
             @RequestParam(required = false) String genre,
             @RequestParam(required = false) BookType type,
             Pageable pageable) {
+        pageable = SortSanitizer.allow(pageable, Set.of("createdAt", "updatedAt", "title", "publicationDate"));
         return bookService.search(q, authorId, genre, type, pageable);
     }
 
@@ -44,9 +53,15 @@ public class BookController {
         return new GenresResponse(BookGenre.displayNames());
     }
 
+    @GetMapping("/leaderboard")
+    List<LeaderboardEntry> leaderboard(@RequestParam(defaultValue = "50") int limit) {
+        return bookService.leaderboard(limit);
+    }
+
     @GetMapping("/mine")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     Page<BookResponse> mine(@AuthenticationPrincipal CurrentUser user, Pageable pageable) {
+        pageable = SortSanitizer.allow(pageable, Set.of("createdAt", "updatedAt", "title", "publicationDate"));
         return bookService.getMine(user.id(), pageable);
     }
 

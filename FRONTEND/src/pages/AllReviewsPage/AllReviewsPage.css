@@ -1,3 +1,152 @@
-.all-reviews-page{max-width:860px;margin:0 auto;padding:36px 24px 110px}.all-reviews-head{display:flex;align-items:center;gap:14px;padding-bottom:26px;border-bottom:1px solid var(--sv-line);margin-bottom:24px}.all-reviews-back{width:38px;height:38px;flex:0 0 auto;display:grid;place-items:center;border:1px solid var(--sv-line);border-radius:50%;color:var(--sv-muted);background:var(--sv-panel);transition:color .2s ease,border-color .2s ease}.all-reviews-back:hover{color:var(--sv-cream);border-color:var(--sv-violet)}.all-reviews-back:focus-visible{outline:2px solid var(--sv-violet);outline-offset:2px}.all-reviews-head h1{color:var(--sv-cream);font:700 22px var(--sv-sans);letter-spacing:.01em;margin:0}.all-reviews-head h1 em{font-style:normal;color:var(--sv-violet)}.all-reviews-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-bottom:10px}.verdict-tabs{display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.verdict-tabs::-webkit-scrollbar{display:none}.verdict-tabs button{flex:0 0 auto;padding:8px 16px;border-radius:999px;border:1px solid var(--sv-line);background:transparent;color:var(--sv-muted);font:500 13px var(--sv-sans);cursor:pointer;white-space:nowrap;transition:background .2s ease,color .2s ease,border-color .2s ease}.verdict-tabs button:hover{color:var(--sv-cream);border-color:var(--sv-violet)}.verdict-tabs button.active{background:var(--sv-panel-2);border-color:var(--sv-panel-2);color:var(--sv-cream);font-weight:600}.all-reviews-loading{padding:22px;text-align:center;color:var(--sv-muted);font:400 13px var(--sv-sans);letter-spacing:.04em}.all-reviews-sentinel{height:1px}.all-reviews-error{display:flex;flex-direction:column;align-items:center;gap:14px;padding:60px 20px;text-align:center}.all-reviews-error p{color:var(--sv-muted);font:400 14px var(--sv-sans)}
-@media(max-width:800px){.all-reviews-page{padding:24px 18px 110px}.all-reviews-head h1{font-size:19px}}
-@media(max-width:640px){.all-reviews-toolbar{flex-wrap:wrap}.verdict-tabs{flex:1 1 100%;order:1}.all-reviews-page .sort-dropdown{order:2}.all-reviews-head{gap:10px;padding-bottom:20px;margin-bottom:18px}}
+.all-reviews-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 36px 24px 110px
+}
+
+.all-reviews-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 26px;
+    border-bottom: 1px solid var(--sv-line);
+    margin-bottom: 24px
+}
+
+.all-reviews-back {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--sv-line);
+    border-radius: 50%;
+    color: var(--sv-muted);
+    background: var(--sv-panel);
+    transition: color .2s ease, border-color .2s ease
+}
+
+.all-reviews-back:hover {
+    color: var(--sv-cream);
+    border-color: var(--sv-violet)
+}
+
+.all-reviews-back:focus-visible {
+    outline: 2px solid var(--sv-violet);
+    outline-offset: 2px
+}
+
+.all-reviews-head h1 {
+    color: var(--sv-cream);
+    font: 700 22px var(--sv-sans);
+    letter-spacing: .01em;
+    margin: 0
+}
+
+.all-reviews-head h1 em {
+    font-style: normal;
+    color: var(--sv-violet)
+}
+
+.all-reviews-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 10px
+}
+
+.verdict-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch
+}
+
+.verdict-tabs::-webkit-scrollbar {
+    display: none
+}
+
+.verdict-tabs button {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--sv-line);
+    background: transparent;
+    color: var(--sv-muted);
+    font: 500 13px var(--sv-sans);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s ease, color .2s ease, border-color .2s ease
+}
+
+.verdict-tabs button:hover {
+    color: var(--sv-cream);
+    border-color: var(--sv-violet)
+}
+
+.verdict-tabs button.active {
+    background: var(--sv-panel-2);
+    border-color: var(--sv-panel-2);
+    color: var(--sv-cream);
+    font-weight: 600
+}
+
+.all-reviews-loading {
+    padding: 22px;
+    text-align: center;
+    color: var(--sv-muted);
+    font: 400 13px var(--sv-sans);
+    letter-spacing: .04em
+}
+
+.all-reviews-sentinel {
+    height: 1px
+}
+
+.all-reviews-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 60px 20px;
+    text-align: center
+}
+
+.all-reviews-error p {
+    color: var(--sv-muted);
+    font: 400 14px var(--sv-sans)
+}
+
+@media(max-width:800px) {
+    .all-reviews-page {
+        padding: 24px 18px 110px
+    }
+
+    .all-reviews-head h1 {
+        font-size: 19px
+    }
+}
+
+@media(max-width:640px) {
+    .all-reviews-toolbar {
+        flex-wrap: wrap
+    }
+
+    .verdict-tabs {
+        flex: 1 1 100%;
+        order: 1
+    }
+
+    .all-reviews-page .sort-dropdown {
+        order: 2
+    }
+
+    .all-reviews-head {
+        gap: 10px;
+        padding-bottom: 20px;
+        margin-bottom: 18px
+    }
+}

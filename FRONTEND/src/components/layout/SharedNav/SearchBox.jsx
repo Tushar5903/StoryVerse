@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiSearch } from 'react-icons/fi'
 import { listBooks } from '../../../services/booksApi'
+import { cloudinaryUrl } from '../../../utils/cloudinary'
 import './SearchBox.css'
 
 const TYPE_LABEL = { REVIEW_BOOK: 'For Review', USER_BOOK: 'User Book' }
@@ -15,6 +16,7 @@ export default function SearchBox({ className = '', autoFocus = false, onNavigat
   const [open, setOpen] = useState(false)
   const boxRef = useRef(null)
   const timerRef = useRef(null)
+  const requestRef = useRef(0)
   useEffect(() => () => clearTimeout(timerRef.current), [])
   useEffect(() => {
     const onPointerDown = event => { if (boxRef.current && !boxRef.current.contains(event.target)) setOpen(false) }
@@ -30,9 +32,12 @@ export default function SearchBox({ className = '', autoFocus = false, onNavigat
     setOpen(true)
     setLoading(true)
     timerRef.current = setTimeout(() => {
+      const requestId = ++requestRef.current
+      // A stale response (an older term resolving after a newer one) must never
+      // overwrite the results - only the latest request may render.
       listBooks(`?q=${encodeURIComponent(term)}&size=6`)
-        .then(page => { setResults(page?.content || []); setLoading(false) })
-        .catch(() => { setResults([]); setLoading(false) })
+        .then(page => { if (requestId === requestRef.current) { setResults(page?.content || []); setLoading(false) } })
+        .catch(() => { if (requestId === requestRef.current) { setResults([]); setLoading(false) } })
     }, 250)
   }
   const submit = event => {
@@ -56,7 +61,7 @@ export default function SearchBox({ className = '', autoFocus = false, onNavigat
             : results.length ? <>
                 {results.map(book => (
                   <Link key={book.id} className="sb-result" to={`/books/${book.id}`} onClick={() => { setOpen(false); onNavigate?.() }}>
-                    <span className="sb-thumb">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</span>
+                    <span className="sb-thumb">{book.coverImage || book.thumbnailUrl ? <img src={cloudinaryUrl(book.coverImage || book.thumbnailUrl, { width: 120 })} alt="" /> : <span>SV</span>}</span>
                     <span className="sb-copy"><strong>{book.title}</strong><small>{TYPE_LABEL[book.bookType] || book.bookType || 'Story'} · {yearOf(book)}</small></span>
                   </Link>
                 ))}

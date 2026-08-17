@@ -23,7 +23,9 @@ public class Chapter extends BaseEntity {
     @Column(name = "chapter_title", nullable = false, length = 240)
     private String chapterTitle;
 
-    @Column(name = "chapter_content", nullable = false, columnDefinition = "TEXT")
+    // MEDIUMTEXT to match V11__scalability_hardening.sql - TEXT (65,535 bytes) cannot
+    // hold the 1,000,000-char API cap, and ddl-auto=validate must see a matching type.
+    @Column(name = "chapter_content", nullable = false, columnDefinition = "MEDIUMTEXT")
     private String chapterContent;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

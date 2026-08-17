@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { getMe, updateMe } from '../../services/usersApi'
 import { setUser } from '../../store/authSlice'
+import './SettingsPage.css'
 
 const emptyForm = { name: '', bio: '', dateOfBirth: '', instagram: '', twitter: '', youtube: '' }
 

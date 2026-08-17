@@ -68,7 +68,9 @@ export default function BookEditorPage({ id }) {
         coverImage: coverImage || form.coverImage.trim() || null,
       }
       if (editing) {
-        await updateBook(id, { ...payload, authorId: Number(form.authorId) })
+        // Never send Number('') === 0: an unset authorId (legacy USER_BOOK) must be null
+        // so the backend keeps the book's existing author instead of 404ing on id 0.
+        await updateBook(id, { ...payload, authorId: form.authorId ? Number(form.authorId) : null })
         toast.success('Story details saved.')
       } else if (bookType === 'REVIEW_BOOK') {
         const created = await createReviewBook({ ...payload, authorId: Number(form.authorId) })

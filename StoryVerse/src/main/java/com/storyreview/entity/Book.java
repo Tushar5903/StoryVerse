@@ -57,14 +57,18 @@ public class Book extends BaseEntity {
     @Column(length = 80)
     private String language;
 
+    // SUBSELECT (instead of fetch-joining into paged queries): genres/tags load in ONE
+    // extra query per page without multiplying rows, so pagination stays in the database.
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "book_genres", joinColumns = @JoinColumn(name = "book_id"))
     @Column(name = "genre", length = 80)
+    @org.hibernate.annotations.Fetch(org.hibernate.annotations.FetchMode.SUBSELECT)
     private Set<String> genres = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "book_tags", joinColumns = @JoinColumn(name = "book_id"))
     @Column(name = "tag", length = 80)
+    @org.hibernate.annotations.Fetch(org.hibernate.annotations.FetchMode.SUBSELECT)
     private Set<String> tags = new HashSet<>();
 
     @Column(name = "publication_date")

@@ -2,26 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 const DEFAULT_PAGE_SIZE = 20
 
-/**
- * Infinite scroll pagination hook.
- *
- * - Fetches `pageSize` records per request (database-level pagination on the
- *   backend — never all rows).
- * - Appends new pages to the existing items; existing items never disappear.
- * - One request at a time (ref-guarded, so observer burst callbacks can't
- *   duplicate a page request).
- * - Page increments only after a successful request, so a failed page stays
- *   retryable via the next intersection event.
- * - `resetKey` change (search/filter/sort swap): the list resets to page 0
- *   during render (guarded adjust-while-rendering), the in-flight request is
- *   aborted, and stale responses are dropped by a session-keyed functional
- *   update — old results can never be appended to a new query's list.
- * - Sentinel IntersectionObserver with 300px rootMargin preloads the next
- *   batch slightly before the user reaches the bottom.
- *
- * `fetchPage(page, pageSize, signal)` must resolve to a Spring Data page-like
- * object ({ content, last, totalPages }) — or a plain array as a fallback.
- */
 export default function useInfiniteScroll({ fetchPage, enabled = true, pageSize = DEFAULT_PAGE_SIZE, resetKey = '' }) {
   const [session, setSession] = useState({
     key: resetKey,
@@ -34,7 +14,6 @@ export default function useInfiniteScroll({ fetchPage, enabled = true, pageSize 
     totalElements: null,
   })
 
-  // Search/filter/sort change: drop everything and restart from page 0.
   if (session.key !== resetKey) {
     setSession({ key: resetKey, items: [], page: 0, initialLoading: true, loadingMore: false, hasMore: true, error: '', totalElements: null })
   }
@@ -88,7 +67,6 @@ export default function useInfiniteScroll({ fetchPage, enabled = true, pageSize 
       })
   }, [pageSize, resetKey])
 
-  // (Re)start from page 0 whenever the session changes.
   useEffect(() => {
     if (!enabled) return undefined
     const state = stateRef.current
@@ -100,7 +78,6 @@ export default function useInfiniteScroll({ fetchPage, enabled = true, pageSize 
     return () => state.controller?.abort()
   }, [enabled, resetKey, requestPage])
 
-  // Preload the next batch ~300px before the sentinel enters the viewport.
   useEffect(() => {
     if (!enabled) return undefined
     const element = sentinelRef.current

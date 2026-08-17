@@ -24,9 +24,16 @@ function useAnimatedNumber(target, duration = 700) {
 
 export default function MeterCenter({ percentage, votes, totalVotes, color, label }) {
   const animated = useAnimatedNumber(percentage)
-  if (!totalVotes) return <div className="moctale-center"><strong style={{ color }}>—</strong><span>No reviews yet</span></div>
-  return <div className="moctale-center" aria-live="polite">
-    <strong style={{ color }}>{animated}%</strong>
-    <span>{label ? `${votes} votes` : `${votes} / ${totalVotes} Votes`}</span>
-  </div>
+  if (!totalVotes) return (
+    <div className="moctale-center">
+      <strong style={{ color }}>—</strong>
+      <span>No reviews yet</span>
+    </div>
+  )
+  return (
+    <div className="moctale-center" aria-live="polite">
+      <strong style={{ color }}>{animated}%</strong>
+      <span>{label ? `${votes} votes` : `${votes} / ${totalVotes} Votes`}</span>
+    </div>
+  )
 }

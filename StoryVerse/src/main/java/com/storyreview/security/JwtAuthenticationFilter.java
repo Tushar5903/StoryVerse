@@ -21,9 +21,11 @@ import java.util.Map;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtService jwtService;
+    private final UserStatusService userStatusService;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserStatusService userStatusService) {
         this.jwtService = jwtService;
+        this.userStatusService = userStatusService;
     }
 
     @Override
@@ -35,7 +37,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // entirely and surfaces as a raw container error instead of a clean 401 JSON response.
             try {
                 Map<String, Object> claims = jwtService.validate(header.substring(7));
-                CurrentUser principal = new CurrentUser(((Number) claims.get("uid")).longValue(), (String) claims.get("email"), Role.valueOf((String) claims.get("role")));
+                Long uid = ((Number) claims.get("uid")).longValue();
+                // A signed token is not enough: banned/disabled accounts must lose access
+                // well before the access token expires (checked at refresh otherwise).
+                if (!userStatusService.isActive(uid)) {
+                    log.debug("Rejecting request for inactive user {}", uid);
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                CurrentUser principal = new CurrentUser(uid, (String) claims.get("email"), Role.valueOf((String) claims.get("role")));
                 var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_" + principal.role().name())));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception ex) {

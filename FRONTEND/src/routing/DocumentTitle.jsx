@@ -61,7 +61,7 @@ export default function DocumentTitle({ pathname, search }) {
         .catch(() => {})
     }
 
-    const dynamicBook = pathname.match(/^\/books\/([^/]+)$/)
+    const dynamicBook = pathname.match(/^\/books\/(\d+)$/)
     if (dynamicBook) {
       getBook(decodeURIComponent(dynamicBook[1]))
         .then(book => {

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import { FiBookOpen, FiCalendar, FiChevronLeft, FiChevronRight, FiEdit3, FiPlus } from 'react-icons/fi'
 import { getAuthor, getAuthorBooks, updateAuthor } from '../../services/authorsApi'
 import { listReviews } from '../../services/reviewsApi'
+import { cloudinaryUrl } from '../../utils/cloudinary'
 import useScrollRow from '../../hooks/useScrollRow'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
@@ -31,10 +32,10 @@ export default function AuthorDetailPage({ authorId }) {
       .then(profile => {
         if (!active) return
         setAuthor(profile)
-        getAuthorBooks(authorId)
+        getAuthorBooks(authorId, '?size=50&sort=publicationDate,desc')
           .then(list => {
             if (!active) return
-            const works = list || []
+            const works = list?.content || []
             setBooks(works)
             Promise.allSettled(works.map(book => listReviews(book.id, '&size=1').then(page => ({ id: book.id, count: page?.totalElements || 0 }))))
               .then(results => {
@@ -46,7 +47,7 @@ export default function AuthorDetailPage({ authorId }) {
                 setReviewCounts(counts)
               })
           })
-          .catch(() => {})
+          .catch(() => { })
       })
       .catch(issue => { if (active) { setNotFound(true); setError(issue.message) } })
     return () => { active = false }
@@ -81,7 +82,7 @@ export default function AuthorDetailPage({ authorId }) {
       toast.success('Author profile updated.')
       setEditing(false)
       setEditForm(null)
-      getAuthor(authorId).then(profile => setAuthor(profile)).catch(() => {})
+      getAuthor(authorId).then(profile => setAuthor(profile)).catch(() => { })
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -95,7 +96,7 @@ export default function AuthorDetailPage({ authorId }) {
 
   return <><SharedNav /><main className="author-page">
     <header className="author-hero">
-      <div className="author-avatar">{author?.profileImage ? <img src={author.profileImage} alt={author?.name || 'Author'} /> : <span className="author-initial">{(author?.name || 'A').slice(0, 1)}</span>}</div>
+      <div className="author-avatar">{author?.profileImage ? <img src={cloudinaryUrl(author.profileImage, { width: 200, height: 200, crop: 'fill' })} alt={author?.name || 'Author'} /> : <span className="author-initial">{(author?.name || 'A').slice(0, 1)}</span>}</div>
       <div className="eyebrow">THE ARCHIVE · AUTHOR</div>
       <h1>{author?.name || 'Loading author…'}</h1>
       <p className="author-role">{author ? roleOf(author) : 'Author'}</p>
@@ -131,7 +132,7 @@ export default function AuthorDetailPage({ authorId }) {
           <button className="ab-nav-btn" onClick={scrollNext} disabled={!canNext} aria-label="Next works"><FiChevronRight /></button>
         </div>}
       </div>
-      {books.length ? <div className="author-books-outer"><div className="author-books" ref={booksRef} tabIndex={0} aria-label="Published works">{books.map(book => <Link className="ab-card" to={`/books/${book.id}`} key={book.id}><span className="ab-cover">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt={book.title} loading="lazy" /> : <span className="ab-fallback">SV</span>}</span><span className="ab-title">{book.title}</span><span className="ab-meta">{book.genre || 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : '—'}</span>{reviewCounts[book.id] ? <span className="ab-reviews">{reviewCounts[book.id]} review{reviewCounts[book.id] === 1 ? '' : 's'}</span> : null}</Link>)}</div>{canPrev && <div className="ab-fade ab-fade--left" aria-hidden="true" />}{canNext && <div className="ab-fade ab-fade--right" aria-hidden="true" />}</div> : !author ? null : <div className="author-empty"><div><FiBookOpen /></div><h3>No published works yet.</h3><p>This author hasn't published any stories yet.</p></div>}
+      {books.length ? <div className="author-books-outer"><div className="author-books" ref={booksRef} tabIndex={0} aria-label="Published works">{books.map(book => <Link className="ab-card" to={`/books/${book.id}`} key={book.id}><span className="ab-cover">{book.coverImage || book.thumbnailUrl ? <img src={cloudinaryUrl(book.coverImage || book.thumbnailUrl, { width: 300 })} alt={book.title} loading="lazy" /> : <span className="ab-fallback">SV</span>}</span><span className="ab-title">{book.title}</span><span className="ab-meta">{book.genre || 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : '—'}</span>{reviewCounts[book.id] ? <span className="ab-reviews">{reviewCounts[book.id]} review{reviewCounts[book.id] === 1 ? '' : 's'}</span> : null}</Link>)}</div>{canPrev && <div className="ab-fade ab-fade--left" aria-hidden="true" />}{canNext && <div className="ab-fade ab-fade--right" aria-hidden="true" />}</div> : !author ? null : <div className="author-empty"><div><FiBookOpen /></div><h3>No published works yet.</h3><p>This author hasn't published any stories yet.</p></div>}
     </section>
     <section className="author-section">
       <div className="author-section-title"><div className="eyebrow">ABOUT THE AUTHOR</div><h2>About the Author</h2></div>

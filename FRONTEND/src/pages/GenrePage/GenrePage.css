@@ -1,1 +1,92 @@
-.genre-page{max-width:1240px;margin:auto;padding:72px 38px;color:var(--sv-cream)}.genre-page h1{font:500 72px var(--sv-serif);margin:14px 0 42px}.genre-tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.genre-tile-new{aspect-ratio:1.15;padding:20px;display:flex;flex-direction:column;justify-content:end;background:linear-gradient(145deg,#21192c,#79548c);border:1px solid #3d304d;transition:transform .25s}.genre-tile-new:hover{transform:translateY(-5px)}.genre-tile-new span{font:22px var(--sv-serif)}.genre-tile-new small{margin-top:7px;color:#d3bfdc;font:10px var(--sv-mono)}.g1{background:linear-gradient(145deg,#22232d,#8c625c)}.g2{background:linear-gradient(145deg,#222e31,#4d8a83)}.g3{background:linear-gradient(145deg,#201727,#563766)}.g4{background:linear-gradient(145deg,#25231e,#a2784f)}.g5{background:linear-gradient(145deg,#1c2731,#4f7390)}.g6{background:linear-gradient(145deg,#30202a,#aa697c)}.g7{background:linear-gradient(145deg,#1b202f,#5565a0)}.g8{background:linear-gradient(145deg,#29261c,#90824f)}.g9{background:linear-gradient(145deg,#281b24,#9d5358)}@media(max-width:800px){.genre-page{padding:48px 20px 82px}.genre-page h1{font-size:48px}.genre-tiles{grid-template-columns:repeat(2,1fr)}}
+.genre-page {
+    max-width: 1240px;
+    margin: auto;
+    padding: 72px 38px;
+    color: var(--sv-cream)
+}
+
+.genre-page h1 {
+    font: 500 72px var(--sv-serif);
+    margin: 14px 0 42px
+}
+
+.genre-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px
+}
+
+.genre-tile-new {
+    aspect-ratio: 1.15;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    background: linear-gradient(145deg, #21192c, #79548c);
+    border: 1px solid #3d304d;
+    transition: transform .25s
+}
+
+.genre-tile-new:hover {
+    transform: translateY(-5px)
+}
+
+.genre-tile-new span {
+    font: 22px var(--sv-serif)
+}
+
+.genre-tile-new small {
+    margin-top: 7px;
+    color: #d3bfdc;
+    font: 10px var(--sv-mono)
+}
+
+.g1 {
+    background: linear-gradient(145deg, #22232d, #8c625c)
+}
+
+.g2 {
+    background: linear-gradient(145deg, #222e31, #4d8a83)
+}
+
+.g3 {
+    background: linear-gradient(145deg, #201727, #563766)
+}
+
+.g4 {
+    background: linear-gradient(145deg, #25231e, #a2784f)
+}
+
+.g5 {
+    background: linear-gradient(145deg, #1c2731, #4f7390)
+}
+
+.g6 {
+    background: linear-gradient(145deg, #30202a, #aa697c)
+}
+
+.g7 {
+    background: linear-gradient(145deg, #1b202f, #5565a0)
+}
+
+.g8 {
+    background: linear-gradient(145deg, #29261c, #90824f)
+}
+
+.g9 {
+    background: linear-gradient(145deg, #281b24, #9d5358)
+}
+
+@media(max-width:800px) {
+    .genre-page {
+        padding: 48px 20px 82px
+    }
+
+    .genre-page h1 {
+        font-size: 48px
+    }
+
+    .genre-tiles {
+        grid-template-columns: repeat(2, 1fr)
+    }
+}

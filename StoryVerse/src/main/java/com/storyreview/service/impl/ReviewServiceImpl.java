@@ -11,6 +11,7 @@ import com.storyreview.repository.BookRepository;
 import com.storyreview.repository.ReviewRepository;
 import com.storyreview.repository.UserRepository;
 import com.storyreview.service.ReviewService;
+import com.storyreview.util.HtmlSanitizer;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,7 +53,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setUser(users.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found")));
         review.setVerdict(request.verdict());
-        review.setMessage(request.message());
+        review.setMessage(HtmlSanitizer.clean(request.message()));
         return toResponse(saveReview(review));
     }
 
@@ -61,7 +62,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = findReview(id);
         assertCanModify(review, userId, role);
         review.setVerdict(request.verdict());
-        review.setMessage(request.message());
+        review.setMessage(HtmlSanitizer.clean(request.message()));
         return toResponse(saveReview(review));
     }
 
@@ -125,6 +126,13 @@ public class ReviewServiceImpl implements ReviewService {
         return reviews.findByBook_PublishedTrue(pageable).map(this::toResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewResponse getMineForBook(Long userId, Long bookId) {
+        return toResponse(reviews.findByUserIdAndBookId(userId, bookId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "You have not reviewed this book")));
+    }
+
     private Review findReview(Long id) {
         return reviews.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Review not found"));
     }
@@ -138,8 +146,12 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private ReviewResponse toResponse(Review review) {
-        return new ReviewResponse(review.getId(), review.getBook().getId(), review.getUser().getId(),
+        var book = review.getBook();
+        return new ReviewResponse(review.getId(), book.getId(), review.getUser().getId(),
                 review.getUser().getUsername(), review.getUser().getName(), review.getUser().getProfileImage(),
-                review.getVerdict(), review.getMessage(), review.getCreatedAt());
+                review.getVerdict(), review.getMessage(), review.getCreatedAt(),
+                book.getTitle(),
+                book.getThumbnailUrl() != null ? book.getThumbnailUrl() : book.getCoverImage(),
+                book.getBookType(), book.getPublicationDate());
     }
 }

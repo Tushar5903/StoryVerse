@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiArrowUpRight, FiBookOpen, FiCheckCircle, FiStar } from 'react-icons/fi'
+import { FiArrowUpRight, FiBookOpen, FiCheckCircle } from 'react-icons/fi'
 import { getProgress, markRead } from '../../services/progressApi'
 import { listMyReviews } from '../../services/reviewsApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
@@ -49,26 +49,6 @@ export default function ReaderDashboardPage() {
     return () => { cancelled = true }
   }, [])
 
-  const streak = useMemo(() => {
-    const days = new Set()
-    for (const book of books) {
-      for (const item of book.chapters || []) {
-        if (item.markedAt) days.add(new Date(item.markedAt).toDateString())
-      }
-    }
-    const list = [...days].map(day => new Date(day).getTime()).sort((a, b) => b - a)
-    if (!list.length) return 0
-    const dayMs = 24 * 60 * 60 * 1000
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    const last = list[0]
-    const start = last === today.getTime() ? last : last === today.getTime() - dayMs ? last : null
-    if (start === null) return 0
-    let count = 0
-    let cursor = start
-    while (list.includes(cursor)) { count += 1; cursor -= dayMs }
-    return count
-  }, [books])
-
   return <>
     <SharedNav />
     <main className="reader-dashboard">
@@ -83,7 +63,6 @@ export default function ReaderDashboardPage() {
       <div className="reader-stats">
         <div className="reader-stat"><FiBookOpen /><span>Stories read</span><strong>{books.length}</strong></div>
         <div className="reader-stat"><FiCheckCircle /><span>Reviews given</span><strong>{reviewsCount === null ? '—' : reviewsCount}</strong></div>
-        <div className="reader-stat"><FiStar /><span>Reading streak</span><strong>{streak} {streak === 1 ? 'day' : 'days'}</strong></div>
       </div>
       <section className="reader-continue">
         <div className="eyebrow">YOUR LIBRARY</div>

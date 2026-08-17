@@ -11,6 +11,7 @@ import com.storyreview.repository.AuthorRepository;
 import com.storyreview.repository.BookRepository;
 import com.storyreview.repository.ReviewRepository;
 import com.storyreview.repository.UserRepository;
+import com.storyreview.util.SortSanitizer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,11 +25,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.persistence.criteria.JoinType;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @Transactional(readOnly = true)
 public class AdminController {
+    private static final Set<String> BOOK_SORTABLE = Set.of("createdAt", "updatedAt", "title", "publicationDate");
+    private static final Set<String> USER_SORTABLE = Set.of("createdAt", "updatedAt", "username", "name");
+    private static final Set<String> AUTHOR_SORTABLE = Set.of("createdAt", "updatedAt", "name");
     private final UserRepository users;
     private final BookRepository books;
     private final ReviewRepository reviews;
@@ -42,6 +50,7 @@ public class AdminController {
     }
 
     @GetMapping("/dashboard")
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "dashboard", key = "'counts'")
     AdminDashboardResponse dashboard() {
         return new AdminDashboardResponse(users.count(), books.count(), reviews.count());
     }
@@ -49,16 +58,23 @@ public class AdminController {
     // All books, including unpublished drafts - the public catalog (GET /api/books) never shows those.
     @GetMapping("/books")
     Page<BookResponse> allBooks(Pageable pageable) {
-        return books.findAll(pageable).map(this::toBookResponse);
+        pageable = SortSanitizer.allow(pageable, BOOK_SORTABLE);
+        Page<Book> page = books.findAll(pageable);
+        Map<Long, Long> counts = page.isEmpty() ? Map.of()
+                : reviews.countByBookIds(page.getContent().stream().map(Book::getId).toList())
+                        .stream().collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+        return page.map(b -> toBookResponse(b, counts.getOrDefault(b.getId(), 0L)));
     }
 
     @GetMapping("/users")
     Page<UserResponse> allUsers(Pageable pageable) {
+        pageable = SortSanitizer.allow(pageable, USER_SORTABLE);
         return users.findAll(pageable).map(this::toUserResponse);
     }
 
     @GetMapping("/authors")
     Page<AuthorResponse> allAuthors(@RequestParam(required = false) String q, Pageable pageable) {
+        pageable = SortSanitizer.allow(pageable, AUTHOR_SORTABLE);
         if (q == null || q.isBlank()) {
             return authors.findAll(pageable).map(this::toAuthorResponse);
         }
@@ -77,16 +93,22 @@ public class AdminController {
     // Published books by a specific user.
     @GetMapping("/users/{userId}/books")
     Page<BookResponse> publishedBooksByUser(@PathVariable Long userId, Pageable pageable) {
-        return books.findByCreatedByIdAndPublishedTrue(userId, pageable).map(this::toBookResponse);
+        pageable = SortSanitizer.allow(pageable, BOOK_SORTABLE);
+        Page<Book> page = books.findByCreatedByIdAndPublishedTrue(userId, pageable);
+        Map<Long, Long> counts = page.isEmpty() ? Map.of()
+                : reviews.countByBookIds(page.getContent().stream().map(Book::getId).toList())
+                        .stream().collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+        return page.map(b -> toBookResponse(b, counts.getOrDefault(b.getId(), 0L)));
     }
 
-    private BookResponse toBookResponse(Book book) {
-        String primaryGenre = book.getGenres().isEmpty() ? null : book.getGenres().iterator().next();
+    private BookResponse toBookResponse(Book book, long reviewCount) {
+        Set<String> genres = new java.util.HashSet<>(book.getGenres());
+        String primaryGenre = genres.isEmpty() ? null : genres.iterator().next();
         return new BookResponse(book.getId(), book.getTitle(), book.getSubtitle(), book.getDescription(),
                 book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(),
-                primaryGenre, book.getGenres(),
-                book.getTags(), book.getPublicationDate(), book.getCreatedBy().getId(), book.getAuthor().getId(),
-                book.getAuthor().getName(), book.getCreatedAt(), book.getUpdatedAt());
+                primaryGenre, genres,
+                new java.util.HashSet<>(book.getTags()), book.getPublicationDate(), book.getCreatedBy().getId(),
+                book.getAuthor().getId(), book.getAuthor().getName(), reviewCount, book.getCreatedAt(), book.getUpdatedAt());
     }
 
     private UserResponse toUserResponse(User user) {

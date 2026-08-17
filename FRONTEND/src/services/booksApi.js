@@ -9,6 +9,7 @@ const formWith = (payload, file, fileField = 'thumbnail') => {
 
 export const listBooks = (query, options) => apiClient(`/books${query || ''}`, options)
 export const getBook = id => apiClient(`/books/${id}`)
+export const getLeaderboard = query => apiClient(`/books/leaderboard${query || ''}`)
 export const listGenres = () => apiClient('/books/genres')
 export const listMyBooks = query => apiClient(`/books/mine${query || ''}`)
 export const createDraft = payload => apiClient('/books', { method: 'POST', body: JSON.stringify(payload) })

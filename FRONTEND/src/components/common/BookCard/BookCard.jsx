@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { FiArrowRight } from 'react-icons/fi'
+import { cloudinaryUrl } from '../../../utils/cloudinary'
 import './BookCard.css'
 
 const TYPE_LABEL = { REVIEW_BOOK: 'For Review', USER_BOOK: 'User Book' }
 const yearOf = book => book.publicationDate ? String(book.publicationDate).slice(0, 4) : '—'
 
 export default function BookCard({ book, count, index = 0 }) {
-  const cover = book.coverImage || book.thumbnailUrl
+  const cover = cloudinaryUrl(book.coverImage || book.thumbnailUrl, { width: 600 })
   const meta = count != null ? `${count} review${count === 1 ? '' : 's'}` : `${TYPE_LABEL[book.bookType] || book.bookType || 'Story'} · ${yearOf(book)}`
   return <motion.div className="discover-motion" role="listitem" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45, delay: index * .05 }}>
     <Link className="discover-card" to={`/books/${book.id}`}>

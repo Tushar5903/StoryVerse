@@ -20,12 +20,12 @@ export function findHighestCategory(counts, percentages) {
   return { highestCategory, highestVotes, highestPercentage: highestCategory ? percentages[highestCategory] : 0 }
 }
 
-export function polarToCartesian(cx, cy, radius, degree) {
+function polarToCartesian(cx, cy, radius, degree) {
   const radians = (degree * Math.PI) / 180
   return { x: cx + radius * Math.cos(radians), y: cy - radius * Math.sin(radians) }
 }
 
-export function buildSegmentArc({ cx, cy, radius, from, to }) {
+function buildSegmentArc({ cx, cy, radius, from, to }) {
   const start = polarToCartesian(cx, cy, radius, from)
   const end = polarToCartesian(cx, cy, radius, to)
   return `M ${start.x} ${start.y} A ${radius} ${radius} 0 0 1 ${end.x} ${end.y}`

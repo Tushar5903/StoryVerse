@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
@@ -7,7 +7,8 @@ import { getBook } from '../../services/booksApi'
 import { getAuthor } from '../../services/authorsApi'
 import { listChapters } from '../../services/chaptersApi'
 import { genrePath } from '../../data/genres'
-import { createReview, listReviews, updateReview } from '../../services/reviewsApi'
+import { cloudinaryUrl } from '../../utils/cloudinary'
+import { createReview, listMyReviews, listReviews, updateReview } from '../../services/reviewsApi'
 import ReviewSection from '../../components/reviews/ReviewSection/ReviewSection'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import MoctaleMeter from '../../components/review-meter/MoctaleMeter'
@@ -103,7 +104,7 @@ function ReviewComposer({ bookId, review, onPosted }) {
 }
 export default function BookDetailPage({ bookId }) {
   const user = useSelector(state => state.auth.user)
-  const [book, setBook] = useState(null); const [chapters, setChapters] = useState([]); const [reviews, setReviews] = useState([]); const [reviewsTotal, setReviewsTotal] = useState(0); const [reviewsLoading, setReviewsLoading] = useState(true); const [reviewsError, setReviewsError] = useState(''); const [error, setError] = useState(''); const [editing, setEditing] = useState(false); const [author, setAuthor] = useState(null); const [chaptersOpen, setChaptersOpen] = useState(true)
+  const [book, setBook] = useState(null); const [chapters, setChapters] = useState([]); const [reviews, setReviews] = useState([]); const [reviewsTotal, setReviewsTotal] = useState(0); const [reviewsLoading, setReviewsLoading] = useState(true); const [reviewsError, setReviewsError] = useState(''); const [error, setError] = useState(''); const [editing, setEditing] = useState(false); const [author, setAuthor] = useState(null); const [chaptersOpen, setChaptersOpen] = useState(true); const [myReview, setMyReview] = useState(null)
   const loadReviews = () => {
     setReviewsLoading(true)
     listReviews(bookId, '&size=50')
@@ -111,13 +112,24 @@ export default function BookDetailPage({ bookId }) {
       .catch(() => setReviewsError('Unable to load reviews.'))
       .finally(() => setReviewsLoading(false))
   }
-  useEffect(() => { Promise.all([getBook(bookId), listChapters(bookId)]).then(([currentBook, currentChapters]) => { setBook(currentBook); setChapters(currentBook.bookType === 'REVIEW_BOOK' ? [] : currentChapters); if (currentBook.authorId) getAuthor(currentBook.authorId).then(setAuthor).catch(() => {}); loadReviews() }).catch(error => setError(error.message)) }, [bookId]) // eslint-disable-line react-hooks/exhaustive-deps
-  const myReview = useMemo(() => user ? reviews.find(review => review.userId === user.id) : null, [reviews, user])
+  useEffect(() => { Promise.all([getBook(bookId), listChapters(bookId)]).then(([currentBook, currentChapters]) => { setBook(currentBook); setChapters(currentBook.bookType === 'REVIEW_BOOK' ? [] : currentChapters); if (currentBook.authorId) getAuthor(currentBook.authorId).then(setAuthor).catch(() => { }); loadReviews() }).catch(error => setError(error.message)) }, [bookId]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The own review is fetched separately (GET /reviews/mine?bookId=) because the paged
+  // review list only shows the newest 50 - a user's older review would otherwise be
+  // invisible, the composer would show, and submitting would 409 as a duplicate.
+  const loadMyReview = () => {
+    const request = user
+      ? listMyReviews(`?bookId=${bookId}`).then(review => ({ ok: true, review })).catch(() => ({ ok: false, review: null }))
+      : Promise.resolve({ ok: false, review: null })
+    return request.then(({ review }) => setMyReview(review))
+  }
+  useEffect(() => {
+    loadMyReview()
+  }, [user?.id, bookId]) // eslint-disable-line react-hooks/exhaustive-deps
   const isOwner = Boolean(user && book && book.createdById === user.id)
   const showChapters = book && book.bookType !== 'REVIEW_BOOK'
   const bookGenres = book ? (book.genres && book.genres.length ? book.genres : book.genre ? [book.genre] : []) : []
   const authorRole = author?.authorType === 'USER' ? 'User Author' : author?.authorType === 'ADMIN' ? 'Staff Author' : 'Author'
-  const reviewZone = isOwner ? null : !myReview ? <ReviewComposer bookId={bookId} onPosted={loadReviews} /> : editing ? <ReviewComposer bookId={bookId} review={myReview} onPosted={() => { setEditing(false); loadReviews() }} /> : null
+  const reviewZone = isOwner ? null : !myReview ? <ReviewComposer bookId={bookId} onPosted={() => { loadReviews(); loadMyReview() }} /> : editing ? <ReviewComposer bookId={bookId} review={myReview} onPosted={() => { setEditing(false); loadReviews(); loadMyReview() }} /> : null
   const scrollToComposer = () => document.getElementById('write-review')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  return <><SharedNav /><main className="detail-page"><Link to="/explore" className="detail-back"><FiArrowLeft /> Back to explore</Link>{error ? <div className="error-box">{error}</div> : book ? <><div className="detail-layout"><div className="detail-cover-col"><div className="detail-cover">{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</div>{book.authorId ? <Link className="detail-cover-author" to={`/authors/${book.authorId}`}><span className="detail-cover-avatar">{author?.profileImage ? <img src={author.profileImage} alt="" /> : (author?.name || book.authorName || 'A').slice(0, 1)}</span><span className="detail-cover-author-copy"><strong>{author?.name || book.authorName || 'Author'}</strong><small>{authorRole}</small></span></Link> : null}{bookGenres.length ? <div className="detail-genres"><h3>Genres</h3><div className="genre-pills">{bookGenres.map(genre => <Link className="genre-pill" to={`/genre/${genrePath(genre)}`} key={genre}>{genre}</Link>)}</div></div> : null}</div><div><div className="eyebrow">{book.genre || 'MANUSCRIPT'} · {book.language || 'EN'}</div><h1>{book.title}</h1>{!book.authorId && <p className="detail-author">By {book.authorName || 'Unknown author'}</p>}<p>{book.description || 'No description has been added yet.'}</p>{showChapters && <div className="chapter-list"><button className="chapters-toggle" onClick={() => setChaptersOpen(value => !value)} aria-expanded={chaptersOpen} aria-controls="chapter-list-body"><span className="chapters-toggle-label">Chapters</span><FiChevronDown className={`chapters-chevron${chaptersOpen ? ' open' : ''}`} size={26} /></button>{chaptersOpen && <div id="chapter-list-body">{chapters.length ? chapters.map(chapter => <Link to={`/reader?bookId=${book.id}`} key={chapter.id}>Chapter {chapter.chapterNumber}: {chapter.chapterTitle}</Link>) : <span>No chapters published yet.</span>}</div>}</div>}</div></div><MoctaleMeter reviews={reviews} />{reviewZone}<section className="detail-reviews"><ReviewSection bookId={bookId} reviews={reviews} total={reviewsTotal} loading={reviewsLoading} error={reviewsError} onRetry={loadReviews} user={user} myReview={myReview} onEditMyReview={() => setEditing(true)} onRefresh={loadReviews} emptyCtaLabel={!isOwner && !myReview ? 'Write a Review' : ''} onEmptyCta={scrollToComposer} /></section></> : <div>Loading manuscript…</div>}</main></>
+  return <><SharedNav /><main className="detail-page"><Link to="/explore" className="detail-back"><FiArrowLeft /> Back to explore</Link>{error ? <div className="error-box">{error}</div> : book ? <><div className="detail-layout"><div className="detail-cover-col"><div className="detail-cover">{book.coverImage || book.thumbnailUrl ? <img src={cloudinaryUrl(book.coverImage || book.thumbnailUrl, { width: 900 })} alt="" /> : <span>SV</span>}</div>{book.authorId ? <Link className="detail-cover-author" to={`/authors/${book.authorId}`}><span className="detail-cover-avatar">{author?.profileImage ? <img src={cloudinaryUrl(author.profileImage, { width: 120, height: 120, crop: 'fill' })} alt="" /> : (author?.name || book.authorName || 'A').slice(0, 1)}</span><span className="detail-cover-author-copy"><strong>{author?.name || book.authorName || 'Author'}</strong><small>{authorRole}</small></span></Link> : null}{bookGenres.length ? <div className="detail-genres"><h3>Genres</h3><div className="genre-pills">{bookGenres.map(genre => <Link className="genre-pill" to={`/genre/${genrePath(genre)}`} key={genre}>{genre}</Link>)}</div></div> : null}</div><div><div className="eyebrow">{book.genre || 'MANUSCRIPT'} · {book.language || 'EN'}</div><h1>{book.title}</h1>{!book.authorId && <p className="detail-author">By {book.authorName || 'Unknown author'}</p>}<p>{book.description || 'No description has been added yet.'}</p>{showChapters && <div className="chapter-list"><button className="chapters-toggle" onClick={() => setChaptersOpen(value => !value)} aria-expanded={chaptersOpen} aria-controls="chapter-list-body"><span className="chapters-toggle-label">Chapters</span><FiChevronDown className={`chapters-chevron${chaptersOpen ? ' open' : ''}`} size={26} /></button>{chaptersOpen && <div id="chapter-list-body">{chapters.length ? chapters.map(chapter => <Link to={`/reader?bookId=${book.id}`} key={chapter.id}>Chapter {chapter.chapterNumber}: {chapter.chapterTitle}</Link>) : <span>No chapters published yet.</span>}</div>}</div>}</div></div><MoctaleMeter reviews={reviews} />{reviewZone}<section className="detail-reviews"><ReviewSection bookId={bookId} reviews={reviews} total={reviewsTotal} loading={reviewsLoading} error={reviewsError} onRetry={loadReviews} user={user} myReview={myReview} onEditMyReview={() => setEditing(true)} onRefresh={loadReviews} emptyCtaLabel={!isOwner && !myReview ? 'Write a Review' : ''} onEmptyCta={scrollToComposer} /></section></> : <div>Loading manuscript…</div>}</main></>
 }

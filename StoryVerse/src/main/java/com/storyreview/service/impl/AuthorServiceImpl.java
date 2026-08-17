@@ -12,8 +12,11 @@ import com.storyreview.entity.Book;
 import com.storyreview.exception.ApiException;
 import com.storyreview.repository.AuthorRepository;
 import com.storyreview.repository.BookRepository;
+import com.storyreview.repository.ReviewRepository;
 import com.storyreview.security.CurrentUser;
 import com.storyreview.service.AuthorService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,20 +24,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class AuthorServiceImpl implements AuthorService {
     private final AuthorRepository authors;
     private final BookRepository books;
+    private final ReviewRepository reviews;
 
-    public AuthorServiceImpl(AuthorRepository authors, BookRepository books) {
+    public AuthorServiceImpl(AuthorRepository authors, BookRepository books, ReviewRepository reviews) {
         this.authors = authors;
         this.books = books;
+        this.reviews = reviews;
     }
 
     @Override
+    @CacheEvict(cacheNames = {"authors", "authorBooks"}, allEntries = true)
     public AuthorResponse create(CreateAuthorRequest request) {
         if (authors.existsByNameIgnoreCase(request.name())) {
             throw new ApiException(HttpStatus.CONFLICT, "Author with this name already exists");
@@ -47,6 +55,7 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
+    @CacheEvict(cacheNames = {"authors", "authorBooks"}, allEntries = true)
     public AuthorResponse update(Long id, UpdateAuthorRequest request, CurrentUser currentUser) {
         Author author = findAuthor(id);
         if (!canEdit(author, currentUser)) {
@@ -62,24 +71,29 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "authors", key = "#id")
     public AuthorResponse getById(Long id) {
         return toResponse(findAuthor(id));
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "authors", key = "{'all', #pageable.pageNumber, #pageable.pageSize, #pageable.sort}")
     public Page<AuthorResponse> getAll(Pageable pageable) {
         return authors.findAll(pageable).map(this::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookResponse> getBooks(Long authorId) {
+    @Cacheable(cacheNames = "authorBooks",
+            key = "{#authorId, #pageable.pageNumber, #pageable.pageSize, #pageable.sort}")
+    public Page<BookResponse> getBooks(Long authorId, Pageable pageable) {
         findAuthor(authorId);
-        return books.findAll((root, query, cb) -> cb.and(
-                        cb.equal(root.get("author").get("id"), authorId),
-                        cb.isTrue(root.get("published"))))
-                .stream().map(this::toBookResponse).toList();
+        Page<Book> found = books.findByAuthorIdAndPublishedTrue(authorId, pageable);
+        Map<Long, Long> counts = found.isEmpty() ? Map.of()
+                : reviews.countByBookIds(found.getContent().stream().map(Book::getId).toList())
+                        .stream().collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+        return found.map(book -> toBookResponse(book, counts.getOrDefault(book.getId(), 0L)));
     }
 
     private Author findAuthor(Long id) {
@@ -122,7 +136,6 @@ public class AuthorServiceImpl implements AuthorService {
         User linkedUser = author.getUser();
         String profileImage = author.getProfileImage();
         String biography = author.getBiography();
-        java.time.LocalDate dateOfBirth = author.getDateOfBirth();
         if (linkedUser != null) {
             if (profileImage == null) {
                 profileImage = linkedUser.getProfileImage();
@@ -130,24 +143,21 @@ public class AuthorServiceImpl implements AuthorService {
             if (biography == null) {
                 biography = linkedUser.getBio();
             }
-            if (dateOfBirth == null) {
-                dateOfBirth = linkedUser.getDateOfBirth();
-            }
         }
         return new AuthorResponse(author.getId(), author.getName(), profileImage,
-                dateOfBirth, author.getPlaceOfBirth(), biography,
+                author.getDateOfBirth(), author.getPlaceOfBirth(), biography,
                 author.getAuthorType(), linkedUser == null ? null : linkedUser.getId(),
                 linkedUser == null ? null : linkedUser.getUsername(),
-                linkedUser == null ? null : linkedUser.getEmail(),
-                author.getCreatedAt(), author.getUpdatedAt());
+                null, author.getCreatedAt(), author.getUpdatedAt());
     }
 
-    private BookResponse toBookResponse(Book book) {
-        String primaryGenre = book.getGenres().isEmpty() ? null : book.getGenres().iterator().next();
+    private BookResponse toBookResponse(Book book, long reviewCount) {
+        Set<String> genres = new java.util.HashSet<>(book.getGenres());
+        String primaryGenre = genres.isEmpty() ? null : genres.iterator().next();
         return new BookResponse(book.getId(), book.getTitle(), book.getSubtitle(), book.getDescription(),
                 book.getCoverImage(), book.getThumbnailUrl(), book.getBookType(), book.isPublished(), book.getLanguage(),
-                primaryGenre, book.getGenres(),
-                book.getTags(), book.getPublicationDate(), book.getCreatedBy().getId(), book.getAuthor().getId(),
-                book.getAuthor().getName(), book.getCreatedAt(), book.getUpdatedAt());
+                primaryGenre, genres,
+                new java.util.HashSet<>(book.getTags()), book.getPublicationDate(), book.getCreatedBy().getId(),
+                book.getAuthor().getId(), book.getAuthor().getName(), reviewCount, book.getCreatedAt(), book.getUpdatedAt());
     }
 }

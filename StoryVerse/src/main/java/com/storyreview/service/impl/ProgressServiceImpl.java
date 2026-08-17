@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ProgressServiceImpl implements ProgressService {
@@ -58,7 +59,13 @@ public class ProgressServiceImpl implements ProgressService {
         progress.setUser(user);
         progress.setBook(chapter.getBook());
         progress.setChapter(chapter);
-        progressRepo.save(progress);
+        try {
+            progressRepo.save(progress);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // The pre-check above is not atomic - a concurrent request (e.g. the frontend
+            // 401-retry re-firing the same POST) can hit uk_reading_progress_user_chapter.
+            // The row exists now, so this is a successful no-op, not a 500.
+        }
     }
 
     @Override
@@ -70,14 +77,24 @@ public class ProgressServiceImpl implements ProgressService {
     @Override
     @Transactional(readOnly = true)
     public List<BookProgressResponse> getProgress(Long userId) {
+        // EntityGraph on the repository fetch joins book + chapter with the rows (1 query).
         List<ReadingProgress> rows = progressRepo.findByUserIdOrderByUpdatedAtDesc(userId);
         Map<Long, List<ReadingProgress>> byBook = new LinkedHashMap<>();
         for (ReadingProgress row : rows) {
             byBook.computeIfAbsent(row.getBook().getId(), k -> new ArrayList<>()).add(row);
         }
+        if (byBook.isEmpty()) {
+            return List.of();
+        }
+        // One IN query for all books (author + genres fetch-joined) instead of findById per book.
+        Map<Long, Book> booksById = bookRepo.findDetailsByIds(byBook.keySet()).stream()
+                .collect(Collectors.toMap(Book::getId, b -> b));
+        // One GROUP BY count over all book ids instead of countByBookId per book.
+        Map<Long, Long> chapterCounts = chapterRepo.countByBookIds(byBook.keySet()).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
         List<BookProgressResponse> result = new ArrayList<>();
         for (Map.Entry<Long, List<ReadingProgress>> entry : byBook.entrySet()) {
-            Book book = bookRepo.findById(entry.getKey()).orElse(null);
+            Book book = booksById.get(entry.getKey());
             if (book == null || !isVisible(book, userId)) {
                 continue;
             }
@@ -88,7 +105,7 @@ public class ProgressServiceImpl implements ProgressService {
             result.add(new BookProgressResponse(book.getId(), book.getTitle(), book.getCoverImage(),
                     book.getThumbnailUrl(), book.getGenres().isEmpty() ? null : book.getGenres().iterator().next(),
                     book.getAuthor().getName(),
-                    chapterRepo.countByBookId(book.getId()), chapters));
+                    chapterCounts.getOrDefault(book.getId(), 0L), chapters));
         }
         return result;
     }

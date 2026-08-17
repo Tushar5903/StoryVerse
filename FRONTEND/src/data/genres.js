@@ -1,2 +1,24 @@
-export const DEFAULT_GENRES = ['Action', 'Adventure', 'Biography', 'Business', "Children's Books", 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Historical Fiction', 'History', 'Horror', 'Informative', 'Mystery', 'Poetry', 'Romance', 'Science Fiction', 'Self-Help', 'Sports', 'Technology', 'Thriller', 'Young Adult']
+export const DEFAULT_GENRES = [
+    'Action', 
+    'Adventure', 
+    'Biography', 
+    'Business', 
+    "Children's Books", 
+    'Comedy', 
+    'Crime', 
+    'Drama', 
+    'Fantasy', 
+    'Historical Fiction', 
+    'History', 
+    'Horror', 
+    'Informative', 
+    'Mystery', 
+    'Poetry', 
+    'Romance', 
+    'Science Fiction', 
+    'Self-Help', 
+    'Sports', 
+    'Technology', 
+    'Thriller', 
+    'Young Adult']
 export const genrePath = genre => genre.toLowerCase().replaceAll(' ', '-')

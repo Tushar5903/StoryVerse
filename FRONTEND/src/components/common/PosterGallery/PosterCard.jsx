@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { cloudinaryUrl } from '../../../utils/cloudinary'
 import PosterSkeleton from './PosterSkeleton'
 
 const OFFSETS = ['0px', '36px', '14px', '44px', '22px']
@@ -17,7 +18,7 @@ function PosterCard({ book, index }) {
     observer.observe(node)
     return () => observer.disconnect()
   }, [])
-  const cover = book.coverImage || book.thumbnailUrl
+  const cover = cloudinaryUrl(book.coverImage || book.thumbnailUrl, { width: 400 })
   const title = book.title || 'Untitled story'
   const genre = book.genre || ''
   const delay = (index % 7) * 0.6

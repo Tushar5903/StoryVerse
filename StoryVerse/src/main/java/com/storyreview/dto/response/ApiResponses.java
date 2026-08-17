@@ -8,6 +8,7 @@ import com.storyreview.enums.Role;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class ApiResponses {
@@ -31,15 +32,20 @@ public final class ApiResponses {
             Long id, String title, String subtitle, String description, String coverImage, String thumbnailUrl,
             BookType bookType, boolean published, String language, String genre, Set<String> genres, Set<String> tags,
             LocalDate publicationDate, Long createdById, Long authorId, String authorName,
-            Instant createdAt, Instant updatedAt) {}
+            long reviewCount, Instant createdAt, Instant updatedAt) {}
 
     public record ChapterResponse(
             Long id, Long bookId, int chapterNumber, String chapterTitle,
-            String chapterContent, Instant createdAt, Instant updatedAt) {}
+            String chapterContent, Long wordCount, Instant createdAt, Instant updatedAt) {}
 
     public record ReviewResponse(
             Long id, Long bookId, Long userId, String username, String name, String profileImage,
-            ReviewVerdict verdict, String message, Instant createdAt) {}
+            ReviewVerdict verdict, String message, Instant createdAt,
+            String bookTitle, String bookCover, BookType bookType, LocalDate publicationDate) {}
+
+    // Aggregated per-book verdict counts for the leaderboard: ONE query for the whole
+    // pool instead of a request (and a page of review bodies) per book.
+    public record LeaderboardEntry(BookResponse book, long votes, Map<String, Long> verdicts) {}
 
     public record PublicUserResponse(
             Long id, String name, String username, String profileImage, String bio,
