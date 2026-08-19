@@ -3,6 +3,7 @@ package com.storyreview.security;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storyreview.entity.User;
+import com.storyreview.enums.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,26 @@ public class JwtService {
         payload.put("uid", user.getId());
         payload.put("email", user.getEmail());
         payload.put("role", user.getRole().name());
+        payload.put("iat", now.getEpochSecond());
+        payload.put("exp", now.plusSeconds(accessMinutes * 60).getEpochSecond());
+        return encode(Map.of("alg", "HS256", "typ", "JWT"), payload);
+    }
+
+    /**
+     * Super-admin tokens: minted ONLY by the super-admin login endpoint after the
+     * env credentials match. The identity is synthetic (uid 0 - real user ids start
+     * at 1), role is ADMIN so existing admin paths work, and {@code su: true} is
+     * re-validated against the env email by the filter on every request. No refresh
+     * tokens - the session dies with the access token.
+     */
+    public String generateSuperAdminToken(String email) {
+        Instant now = Instant.now();
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("sub", "0");
+        payload.put("uid", 0L);
+        payload.put("email", email);
+        payload.put("role", Role.ADMIN.name());
+        payload.put("su", true);
         payload.put("iat", now.getEpochSecond());
         payload.put("exp", now.plusSeconds(accessMinutes * 60).getEpochSecond());
         return encode(Map.of("alg", "HS256", "typ", "JWT"), payload);

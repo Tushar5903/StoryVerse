@@ -7,6 +7,8 @@ import com.storyreview.dto.response.ApiResponses.UserResponse;
 import com.storyreview.entity.Author;
 import com.storyreview.entity.Book;
 import com.storyreview.entity.User;
+import com.storyreview.enums.BookType;
+import com.storyreview.enums.Role;
 import com.storyreview.repository.AuthorRepository;
 import com.storyreview.repository.BookRepository;
 import com.storyreview.repository.ReviewRepository;
@@ -56,10 +58,21 @@ public class AdminController {
     }
 
     // All books, including unpublished drafts - the public catalog (GET /api/books) never shows those.
+    // Optional filters: bookType narrows by type (e.g. USER_BOOK); createdByRole narrows by the
+    // creator's account role (e.g. USER = books written by regular users, the "User's Books" tab).
     @GetMapping("/books")
-    Page<BookResponse> allBooks(Pageable pageable) {
+    Page<BookResponse> allBooks(@RequestParam(required = false) BookType bookType,
+                                @RequestParam(required = false) Role createdByRole, Pageable pageable) {
         pageable = SortSanitizer.allow(pageable, BOOK_SORTABLE);
-        Page<Book> page = books.findAll(pageable);
+        Specification<Book> spec = null;
+        if (bookType != null) {
+            spec = (root, cq, cb) -> cb.equal(root.get("bookType"), bookType);
+        }
+        if (createdByRole != null) {
+            Specification<Book> roleSpec = (root, cq, cb) -> cb.equal(root.join("createdBy").get("role"), createdByRole);
+            spec = spec == null ? roleSpec : spec.and(roleSpec);
+        }
+        Page<Book> page = spec == null ? books.findAll(pageable) : books.findAll(spec, pageable);
         Map<Long, Long> counts = page.isEmpty() ? Map.of()
                 : reviews.countByBookIds(page.getContent().stream().map(Book::getId).toList())
                         .stream().collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));

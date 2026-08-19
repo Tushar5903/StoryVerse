@@ -37,6 +37,8 @@ public class AuthController {
     private int forgotPerHour;
     @Value("${app.security.rate-limit.refresh-per-15m:30}")
     private int refreshPer15m;
+    @Value("${app.security.rate-limit.super-admin-login-per-15m:5}")
+    private int superAdminLoginPer15m;
     @Value("${app.security.trusted-proxies:}")
     private String trustedProxies;
 
@@ -82,6 +84,15 @@ public class AuthController {
         AuthResponse response = authService.login(request);
         rateLimiter.reset(accountKey);
         return response;
+    }
+
+    @PostMapping("/super-admin/login")
+    AuthResponse superAdminLogin(@Valid @RequestBody SuperAdminLoginRequest request, HttpServletRequest http) {
+        // Stricter than the user-login limits: 5 tries per IP per 15 minutes against
+        // the env-only super-admin credentials, plus the shared per-IP bucket.
+        rateLimiter.check("su-login:" + clientIp(http), superAdminLoginPer15m, 900);
+        rateLimiter.check("ip:" + clientIp(http), loginPer15m + 10, 900);
+        return authService.superAdminLogin(request.email(), request.password());
     }
 
     @PostMapping("/refresh")

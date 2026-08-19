@@ -2,7 +2,7 @@ import { requestBus } from './requestBus'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082/api'
 
-const AUTH_PATHS = ['/login', '/register', '/forgot-password', '/reset-password']
+const AUTH_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/super-admin/login']
 
 export class ApiError extends Error {
   constructor(status, message, payload) { super(message); this.status = status; this.payload = payload }
@@ -78,4 +78,34 @@ export async function apiClient(path, options = {}, retried = false) {
 
 export function saveAuth(response) { if (response?.accessToken) localStorage.setItem('sv_token', response.accessToken); if (response?.refreshToken) localStorage.setItem('sv_refresh_token', response.refreshToken); return response }
 export function clearAuth() { localStorage.removeItem('sv_token'); localStorage.removeItem('sv_refresh_token') }
+export function saveSuperAuth(response) { if (response?.accessToken) localStorage.setItem('sv_super_token', response.accessToken); return response }
+export function clearSuperAuth() { localStorage.removeItem('sv_super_token') }
 export { API_BASE_URL }
+
+/**
+ * Super-admin API client. Deliberately separate from {@link apiClient}: the
+ * super session rides on its own `sv_super_token` (kept out of the normal
+ * `sv_token` so a super-admin console never hijacks the user session and vice
+ * versa) and never attempts the user refresh flow - super-admin tokens are
+ * single-session by design. A 401/403 just clears the super session and sends
+ * the console back to its login page.
+ */
+export async function superApiClient(path, options = {}) {
+  const token = localStorage.getItem('sv_super_token')
+  const headers = { ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) }
+  requestBus.start()
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })
+    const text = await response.text()
+    let payload
+    try { payload = text ? JSON.parse(text) : null } catch { payload = { message: text } }
+    if (response.status === 401 || response.status === 403) {
+      clearSuperAuth()
+      if (window.location.pathname !== '/super-admin/login') window.location.replace('/super-admin/login')
+    }
+    if (!response.ok) throw new ApiError(response.status, payload?.message || payload?.error || `Request failed (${response.status})`, payload)
+    return payload
+  } finally {
+    requestBus.end()
+  }
+}

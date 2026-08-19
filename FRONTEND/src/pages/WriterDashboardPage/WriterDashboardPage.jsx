@@ -16,10 +16,24 @@ export default function WriterDashboardPage() {
   const [error, setError] = useState('')
   const [pendingDelete, setPendingDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 50
+  const FETCH_SIZE = 100
 
   const load = () => {
-    Promise.all([getMe(), listMyBooks('?size=50')])
-      .then(([profile, page]) => { setUser(profile); setBooks(page.content || []); setError('') })
+    const fetchAll = async () => {
+      const all = []
+      let index = 0
+      while (index < 50) {
+        const res = await listMyBooks(`?page=${index}&size=${FETCH_SIZE}`)
+        all.push(...(res.content || []))
+        if (!res.content || !res.content.length || all.length >= (res.totalElements ?? 0)) break
+        index += 1
+      }
+      return all
+    }
+    Promise.all([getMe(), fetchAll()])
+      .then(([profile, all]) => { setUser(profile); setBooks(all); setPage(p => Math.min(p, Math.max(0, Math.ceil(all.length / PAGE_SIZE) - 1))); setError('') })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }
@@ -37,6 +51,11 @@ export default function WriterDashboardPage() {
 
   const published = books.filter(book => book.published).length
   const drafts = books.length - published
+
+  const totalPages = Math.max(1, Math.ceil(books.length / PAGE_SIZE))
+  const curPage = Math.min(page, totalPages - 1)
+  const visible = books.slice(curPage * PAGE_SIZE, (curPage + 1) * PAGE_SIZE)
+  const pageNumbers = totalPages <= 12 ? Array.from({ length: totalPages }, (_, i) => i) : []
 
   return <>
     <SharedNav />
@@ -63,7 +82,7 @@ export default function WriterDashboardPage() {
         <h2>Your stories</h2>
         {loading ? <div className="writer-empty">Loading your archive…</div>
           : !books.length ? <div className="writer-empty"><strong>Your shelf is empty.</strong><p>Create a manuscript to begin publishing.</p><Link className="button" to="/books/new">Start writing <FiArrowUpRight /></Link></div>
-            : <div className="writer-list">{books.map(book => <div className="writer-row" key={book.id}>
+            : <><div className="writer-list">{visible.map(book => <div className="writer-row" key={book.id}>
               <Link className="writer-cover" to={`/books/${book.id}/edit`}>{book.coverImage || book.thumbnailUrl ? <img src={book.coverImage || book.thumbnailUrl} alt="" /> : <span>SV</span>}</Link>
               <div className="writer-row-main">
                 <h3><Link to={`/books/${book.id}/edit`}>{book.title}</Link></h3>
@@ -81,7 +100,14 @@ export default function WriterDashboardPage() {
               </div>
               <span className={`writer-status ${book.published ? 'published' : 'draft'}`}>{book.published ? 'Published' : 'Draft'}</span>
             </div>)}
-            </div>}
+              </div>
+              {totalPages > 1 && <div className="writer-pagination">
+                <button disabled={curPage === 0} onClick={() => setPage(curPage - 1)}>Prev</button>
+                {pageNumbers.map(n => <button key={n} className={n === curPage ? 'active' : ''} onClick={() => setPage(n)}>{n + 1}</button>)}
+                <button disabled={curPage === totalPages - 1} onClick={() => setPage(curPage + 1)}>Next</button>
+                <span className="writer-pagination-info">Page {curPage + 1} of {totalPages}</span>
+              </div>}
+              </>}
       </section>
       <p className="writer-account">Publishing as <strong>@{user?.username || 'writer'}</strong> — your author profile updates automatically.</p>
     </main>

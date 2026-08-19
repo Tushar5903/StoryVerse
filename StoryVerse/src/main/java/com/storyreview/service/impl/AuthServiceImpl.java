@@ -51,9 +51,11 @@ public class AuthServiceImpl implements AuthService {
     private final CloudinaryService cloudinaryService;
     private final long otpTtlSeconds;
     private final long refreshDays;
+    private final String superAdminEmail;
+    private final String superAdminPassword;
     private final String dummyPasswordHash;
 
-    public AuthServiceImpl(UserRepository users, AuthorRepository authors, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, OtpCodeRepository otpCodes, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService, @Value("${app.security.otp.ttl-seconds:300}") long otpTtlSeconds, @Value("${app.security.jwt.refresh-days:2}") long refreshDays) {
+    public AuthServiceImpl(UserRepository users, AuthorRepository authors, RefreshTokenRepository refreshTokens, PasswordResetTokenRepository resetTokens, OtpCodeRepository otpCodes, PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, CloudinaryService cloudinaryService, @Value("${app.security.otp.ttl-seconds:300}") long otpTtlSeconds, @Value("${app.security.jwt.refresh-days:2}") long refreshDays, @Value("${app.security.super-admin-email:}") String superAdminEmail, @Value("${app.security.super-admin-password:}") String superAdminPassword) {
         this.users = users;
         this.authors = authors;
         this.refreshTokens = refreshTokens;
@@ -65,6 +67,8 @@ public class AuthServiceImpl implements AuthService {
         this.cloudinaryService = cloudinaryService;
         this.otpTtlSeconds = otpTtlSeconds;
         this.refreshDays = refreshDays;
+        this.superAdminEmail = superAdminEmail == null ? "" : superAdminEmail.trim();
+        this.superAdminPassword = superAdminPassword;
         // Pre-computed at startup so login() can run a BCrypt compare even when the
         // account doesn't exist - otherwise the missing-user path is visibly faster
         // and leaks whether an email is registered (timing side channel).
@@ -139,6 +143,46 @@ public class AuthServiceImpl implements AuthService {
         if (user.isBanned()) throw new ApiException(HttpStatus.FORBIDDEN, "User account is banned");
         log.info("User {} authenticated", user.getEmail());
         return authResponse(user, issueRefresh(user));
+    }
+
+    /**
+     * Super-admin login validates ONLY against the env credentials - there is no DB
+     * row, so no account exists to ban, demote, or escalate to. Both fields are
+     * compared in constant time (email via {@link java.security.MessageDigest#isEqual},
+     * password via BCrypt when the env value is a hash, else constant-time compare),
+     * and every failure answers the same generic 401 so the endpoint cannot be used
+     * to enumerate valid emails. The minted access token carries {@code su: true}
+     * (re-validated against the env email by the filter on every request) and has no
+     * refresh token: the session ends when the access token expires.
+     */
+    @Override
+    public AuthResponse superAdminLogin(String email, String password) {
+        if (superAdminEmail.isBlank() || superAdminPassword == null || superAdminPassword.isBlank()
+                || email == null || password == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid super admin credentials");
+        }
+        boolean emailOk = constantTimeEquals(email.trim().toLowerCase(), superAdminEmail.toLowerCase());
+        boolean passwordOk = matchesSuperAdminPassword(password);
+        if (!emailOk || !passwordOk) {
+            log.warn("Failed super admin login attempt for {}", emailOk ? superAdminEmail : "unknown email");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid super admin credentials");
+        }
+        log.info("Super admin logged in as {}", superAdminEmail);
+        return new AuthResponse(0L, "Super Admin", "superadmin", superAdminEmail, Role.ADMIN,
+                jwtService.generateSuperAdminToken(superAdminEmail), null);
+    }
+
+    private boolean matchesSuperAdminPassword(String candidate) {
+        String stored = superAdminPassword.trim();
+        if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+            return passwordEncoder.matches(candidate, stored);
+        }
+        return constantTimeEquals(candidate, stored);
+    }
+
+    private boolean constantTimeEquals(String left, String right) {
+        return java.security.MessageDigest.isEqual(left.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                right.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**

@@ -25,6 +25,7 @@ public final class AuthRequests {
             @NotBlank @Pattern(regexp = "^\\d{6}$", message = "Verification code must be 6 digits") String otp) {}
 
     public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {}
+    public record SuperAdminLoginRequest(@NotBlank @Email @Size(max = 190) String email, @NotBlank @Size(max = 200) String password) {}
     public record RefreshTokenRequest(@NotBlank String refreshToken) {}
     public record LogoutRequest(@NotBlank String refreshToken) {}
     public record ForgotPasswordRequest(@NotBlank @Email String email) {}

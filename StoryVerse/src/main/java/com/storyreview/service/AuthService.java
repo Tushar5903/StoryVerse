@@ -11,6 +11,7 @@ public interface AuthService {
     MessageResponse sendRegistrationOtp(RegisterRequest request);
     AuthResponse verifyRegistration(VerifyRegistrationRequest request);
     AuthResponse login(LoginRequest request);
+    AuthResponse superAdminLogin(String email, String password);
     AuthResponse refresh(RefreshTokenRequest request);
     void forgotPassword(ForgotPasswordRequest request);
     void resetPassword(ResetPasswordRequest request);

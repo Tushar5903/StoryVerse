@@ -65,6 +65,7 @@ function AllBooks({ view }) {
   const { items, initialLoading, loadingMore, hasMore, error, sentinelRef } = useInfiniteScroll({
     enabled: !!viewDef,
     resetKey: view,
+    pageSize: 25,
     fetchPage: (page, size, signal) => fetchViewPage(viewDef, page, size, signal),
   })
   const title = viewDef?.title

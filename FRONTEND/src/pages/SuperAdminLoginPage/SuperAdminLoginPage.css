@@ -1,0 +1,102 @@
+.sa-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(1200px 600px at 50% -10%, var(--sv-panel-2), var(--sv-bg) 60%);
+    padding: 24px;
+}
+.sa-login-panel {
+    width: 100%;
+    max-width: 420px;
+    background: var(--sv-panel);
+    border: 1px solid var(--sv-line);
+    border-radius: 16px;
+    padding: 40px 36px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+}
+.sa-login-mark {
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    color: var(--sv-violet);
+    background: rgba(169, 139, 216, .12);
+    border: 1px solid rgba(169, 139, 216, .3);
+    border-radius: 14px;
+    margin-bottom: 20px;
+}
+.sa-login-panel h1 {
+    font-size: 26px;
+    margin: 6px 0 10px;
+    color: var(--sv-cream);
+}
+.sa-login-note {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--sv-muted);
+    margin-bottom: 24px;
+}
+.sa-login-panel form {
+    display: grid;
+    gap: 16px;
+}
+.sa-login-panel label {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--sv-muted);
+}
+.sa-login-panel input {
+    background: var(--sv-bg);
+    border: 1px solid var(--sv-line);
+    border-radius: 10px;
+    color: var(--sv-cream);
+    padding: 12px 14px;
+    font-size: 14px;
+}
+.sa-login-panel .password-field {
+    position: relative;
+}
+.sa-login-panel .password-field input {
+    width: 100%;
+}
+.sa-login-panel .password-field button {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--sv-muted);
+    padding: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.sa-login-panel .login-error {
+    font-size: 13px;
+    color: var(--sv-coral);
+    background: rgba(232, 126, 114, .1);
+    border: 1px solid rgba(232, 126, 114, .3);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+.sa-login-panel .button {
+    margin-top: 4px;
+}
+.sa-login-links {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 13px;
+}
+.sa-login-links a {
+    color: var(--sv-violet);
+}
+@media (max-width: 640px) {
+    .sa-login-panel {
+        padding: 32px 24px;
+    }
+}

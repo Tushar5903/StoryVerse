@@ -1,0 +1,103 @@
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--sv-line);
+}
+.pager-count {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sv-cream);
+    letter-spacing: .02em;
+}
+.pager-count em {
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sv-muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+.pager-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.pager-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    background: var(--sv-panel);
+    border: 1px solid var(--sv-line);
+    border-radius: 10px;
+    color: var(--sv-cream);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s, transform .1s, box-shadow .15s;
+}
+.pager-btn:hover:not(:disabled):not(.active) {
+    background: var(--sv-panel-2);
+    border-color: var(--sv-violet);
+    color: var(--sv-violet);
+    transform: translateY(-1px);
+}
+.pager-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+.pager-btn:focus-visible {
+    outline: 2px solid var(--sv-violet);
+    outline-offset: 2px;
+}
+.pager-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+.pager-btn.active {
+    background: linear-gradient(135deg, var(--sv-violet), #8d6fd4);
+    border-color: transparent;
+    color: #0b0a10;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(169, 139, 216, .28);
+    cursor: default;
+}
+.pager-btn--nav {
+    font-size: 16px;
+}
+.pager-btn--nav svg {
+    stroke-width: 2.5;
+}
+.pager-ellipsis {
+    color: var(--sv-muted);
+    font-size: 14px;
+    padding: 0 4px;
+    letter-spacing: .06em;
+    user-select: none;
+}
+
+@media (max-width: 640px) {
+    .pager {
+        justify-content: center;
+        gap: 12px;
+        margin-top: 18px;
+    }
+    .pager-buttons {
+        justify-content: center;
+        gap: 5px;
+    }
+    .pager-btn {
+        min-width: 42px;
+        height: 42px;
+    }
+}

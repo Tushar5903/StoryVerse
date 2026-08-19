@@ -87,7 +87,7 @@ export default function useInfiniteScroll({ fetchPage, enabled = true, pageSize 
     }, { rootMargin: '300px' })
     observer.observe(element)
     return () => observer.disconnect()
-  }, [enabled, resetKey, requestPage])
+  }, [enabled, resetKey, requestPage, session.initialLoading])
 
   return {
     items: session.items,

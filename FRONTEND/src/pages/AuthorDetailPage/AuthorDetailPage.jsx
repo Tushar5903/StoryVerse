@@ -134,9 +134,6 @@ export default function AuthorDetailPage({ authorId }) {
       </div>
       {books.length ? <div className="author-books-outer"><div className="author-books" ref={booksRef} tabIndex={0} aria-label="Published works">{books.map(book => <Link className="ab-card" to={`/books/${book.id}`} key={book.id}><span className="ab-cover">{book.coverImage || book.thumbnailUrl ? <img src={cloudinaryUrl(book.coverImage || book.thumbnailUrl, { width: 300 })} alt={book.title} loading="lazy" /> : <span className="ab-fallback">SV</span>}</span><span className="ab-title">{book.title}</span><span className="ab-meta">{book.genre || 'Story'} · {book.publicationDate ? String(book.publicationDate).slice(0, 4) : '—'}</span>{reviewCounts[book.id] ? <span className="ab-reviews">{reviewCounts[book.id]} review{reviewCounts[book.id] === 1 ? '' : 's'}</span> : null}</Link>)}</div>{canPrev && <div className="ab-fade ab-fade--left" aria-hidden="true" />}{canNext && <div className="ab-fade ab-fade--right" aria-hidden="true" />}</div> : !author ? null : <div className="author-empty"><div><FiBookOpen /></div><h3>No published works yet.</h3><p>This author hasn't published any stories yet.</p></div>}
     </section>
-    <section className="author-section">
-      <div className="author-section-title"><div className="eyebrow">ABOUT THE AUTHOR</div><h2>About the Author</h2></div>
-      <p className="author-bio">{author?.biography || 'No biography has been written yet.'}</p>
-    </section>
+    
   </main><Footer /></>
 }

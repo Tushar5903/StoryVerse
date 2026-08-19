@@ -6,11 +6,11 @@ import { createAuthor } from '../../services/authorsApi'
 import { listAllAuthors } from '../../services/adminApi'
 import SharedNav from '../../components/layout/SharedNav/SharedNav'
 import Footer from '../../components/layout/Footer/Footer'
-import InfiniteLoader from '../../components/common/InfiniteLoader/InfiniteLoader'
-import useInfiniteScroll from '../../hooks/useInfiniteScroll'
+import Pager from '../../components/common/Pager/Pager'
 import './AdminAuthorsPage.css'
 
 const emptyForm = { name: '', profileImage: '', dateOfBirth: '', placeOfBirth: '', biography: '' }
+const PAGE_SIZE = 100
 
 const SKELETON_ITEMS = Array.from({ length: 6 })
 function DirectorySkeleton() {
@@ -25,17 +25,38 @@ export default function AdminAuthorsPage() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [refreshNonce, setRefreshNonce] = useState(0)
+  const resetKey = `${debouncedQuery}#${refreshNonce}`
+
+  const [session, setSession] = useState({ key: resetKey, page: 0, items: [], loading: true, error: '', totalPages: 0, totalElements: 0 })
+
+  if (session.key !== resetKey) {
+    setSession({ key: resetKey, page: 0, items: [], loading: true, error: '', totalPages: 0, totalElements: 0 })
+  }
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query.trim()), 250)
     return () => clearTimeout(id)
   }, [query])
 
-  const { items: authors, initialLoading: loading, loadingMore, hasMore, error, sentinelRef } = useInfiniteScroll({
-    pageSize: 60,
-    resetKey: `${debouncedQuery}#${refreshNonce}`,
-    fetchPage: (page, size, signal) => listAllAuthors(`?size=${size}&page=${page}${debouncedQuery ? `&q=${encodeURIComponent(debouncedQuery)}` : ''}`, { signal }),
-  })
+  useEffect(() => {
+    const key = resetKey
+    const page = session.page
+    let cancelled = false
+    listAllAuthors(`?size=${PAGE_SIZE}&page=${page}&sort=createdAt,desc${debouncedQuery ? `&q=${encodeURIComponent(debouncedQuery)}` : ''}`)
+      .then(res => {
+        if (cancelled) return
+        setSession(prev => prev.key === key && prev.page === page
+          ? { ...prev, items: res.content || [], loading: false, error: '', totalPages: res.totalPages ?? 0, totalElements: res.totalElements ?? 0 }
+          : prev)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setSession(prev => prev.key === key && prev.page === page ? { ...prev, loading: false, error: 'Failed to load authors. Please try again.' } : prev)
+      })
+    return () => { cancelled = true }
+  }, [resetKey, session.page, debouncedQuery])
+
+  const goToPage = page => setSession(prev => prev.key === resetKey ? { ...prev, page, loading: true, error: '' } : prev)
 
   const set = key => event => setForm(value => ({ ...value, [key]: event.target.value }))
 
@@ -60,6 +81,8 @@ export default function AdminAuthorsPage() {
       setSubmitting(false)
     }
   }
+
+  const { items: authors, loading, error, page, totalPages, totalElements } = session
 
   return <>
     <SharedNav />
@@ -102,6 +125,7 @@ export default function AdminAuthorsPage() {
             <div className="eyebrow">THE ARCHIVE</div>
             <h2>All Authors</h2>
           </div>
+          {totalPages > 1 && <span className="aa-pager-meta">{totalElements} authors · page {page + 1}/{totalPages} (newest first)</span>}
         </div>
         {loading ? <DirectorySkeleton />
           : !authors.length ? <div className="aa-empty"><strong>{debouncedQuery ? 'No matches.' : 'The directory is empty.'}</strong><p>{debouncedQuery ? `No author matches “${debouncedQuery}”.` : 'Create the first author to open the archive.'}</p></div>
@@ -113,8 +137,7 @@ export default function AdminAuthorsPage() {
                   <span className="admin-author-role">{author.authorType === 'ADMIN' ? 'Author' : 'Writer'}</span>
                 </Link>)}
               </div>
-              <div ref={sentinelRef} aria-hidden="true" />
-              <InfiniteLoader loading={loadingMore} hasMore={hasMore} error={error} />
+              <Pager page={page} totalPages={totalPages} totalElements={totalElements} onPage={goToPage} />
             </>}
       </section>
     </main>

@@ -17,6 +17,8 @@ without moving caches to Redis and the rate limiter to a shared store.
 | `SWAGGER_ENABLED` | `false` | hide Swagger UI in prod |
 | `PUBLIC_BASE_URL` | `https://storyverse.example.com` | used in reset-password email links |
 | `CORS_ALLOWED_ORIGINS` | `https://storyverse.example.com` | the frontend origin |
+| `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` | super-admin credentials | env-only console login. **Leave both empty to disable the console entirely** (fails closed). Password may be plain or a BCrypt hash (`$2a$`/`$2b$`/`$2y$…`). See `SUPER_ADMIN_*` in `application-example.properties`. |
+| `RATE_LIMIT_SUPER_ADMIN_LOGIN` | `5` | super-admin login attempts per IP per 15 minutes |
 
 Optional: `JWT_ACCESS_MINUTES` (default 30), `OTP_TTL_SECONDS`, `RATE_LIMIT_*`,
 `CACHE_SPEC`, `DB_POOL_MAX`, `APP_LOG_LEVEL`.
@@ -61,3 +63,7 @@ java -Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar storyverse.jar
 2. `PUBLIC_BASE_URL` set, request a password reset and click the emailed link - it
    must land on `/reset-password?token=...` on the real domain.
 3. Books list page loads with `Cache-Control: public, max-age=30` on `/api/books*`.
+4. Super-admin console: set `SUPER_ADMIN_EMAIL`/`SUPER_ADMIN_PASSWORD`, open
+   `/super-admin/login`, log in, then verify: promoting a user to ADMIN lets them
+   reach `/admin`, and demoting them blocks `/admin` again within ~10 seconds.
+   Leaving the env values empty must make the login endpoint reject everything.

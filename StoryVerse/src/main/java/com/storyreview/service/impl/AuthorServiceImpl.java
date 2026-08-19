@@ -109,6 +109,11 @@ public class AuthorServiceImpl implements AuthorService {
         if (currentUser == null) {
             return false;
         }
+        // Super admin bypasses all ownership rules - it manages profiles on behalf of
+        // the platform (e.g. removing offensive content from a user-linked author).
+        if (currentUser.superAdmin()) {
+            return true;
+        }
         if (currentUser.role() == Role.ADMIN) {
             return author.getUser() == null;
         }

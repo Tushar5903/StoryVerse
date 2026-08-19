@@ -11,7 +11,9 @@
 }
 
 .explore-shell--full {
-    grid-template-columns: minmax(0, 1fr)
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 1240px;
+    padding: 72px 38px 104px
 }
 
 .explore-main {
@@ -160,5 +162,25 @@
     .section-icon {
         width: 30px;
         height: 30px
+    }
+}
+
+/* Full-width views (/search?view=*, /search?q=) share .genre-detail's container
+   metrics so BookCard renders at the same size as genre pages at every breakpoint. */
+@media(max-width:1100px) {
+    .explore-shell--full {
+        padding: 48px 38px 88px
+    }
+}
+
+@media(max-width:800px) {
+    .explore-shell--full {
+        padding: 48px 20px 82px
+    }
+}
+
+@media(max-width:640px) {
+    .explore-shell--full {
+        padding: 28px 20px 72px
     }
 }

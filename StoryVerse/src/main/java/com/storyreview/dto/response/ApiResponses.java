@@ -22,6 +22,7 @@ public final class ApiResponses {
                                LocalDate dateOfBirth, String instagram, String twitter, String youtube,
                                Role role, boolean enabled, boolean emailVerified, boolean banned) {}
     public record AuthResponse(Long userId, String name, String username, String email, Role role, String accessToken, String refreshToken) {}
+    public record SuperAdminSessionResponse(Long userId, String name, String email, String role, Instant loginAt) {}
 
     public record AuthorResponse(
             Long id, String name, String profileImage, LocalDate dateOfBirth,
